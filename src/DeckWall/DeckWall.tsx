@@ -148,6 +148,43 @@ export default function DeckWall() {
                 <div className="dw-modal__deck dw-modal__deck--back" style={deckStyle(game.selected, 0)}>
                   <span className="dw-modal__label">Back</span>
                   <span className="dw-modal__back-art" />
+                  <svg className="dw-modal__back-svg" viewBox="0 0 112 350" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="dwTruckMetal" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0" stopColor="#e8e0c9" stopOpacity="0.82" />
+                        <stop offset="0.52" stopColor="#6f6a60" stopOpacity="0.8" />
+                        <stop offset="1" stopColor="#f5efe0" stopOpacity="0.68" />
+                      </linearGradient>
+                      <radialGradient id="dwWheelRubber" cx="50%" cy="45%" r="60%">
+                        <stop offset="0" stopColor="#2b2b2f" />
+                        <stop offset="0.55" stopColor="#111114" />
+                        <stop offset="1" stopColor="#050506" />
+                      </radialGradient>
+                    </defs>
+                    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M33 94h46" stroke="url(#dwTruckMetal)" strokeWidth="7" />
+                      <path d="M42 82h28l8 12-8 12H42l-8-12z" fill="rgba(232,224,201,0.22)" stroke="rgba(243,239,226,0.62)" strokeWidth="1.4" />
+                      <circle cx="47" cy="89" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="65" cy="89" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="47" cy="99" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="65" cy="99" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="28" cy="94" r="13" fill="url(#dwWheelRubber)" stroke="rgba(243,239,226,0.24)" strokeWidth="1.4" />
+                      <circle cx="84" cy="94" r="13" fill="url(#dwWheelRubber)" stroke="rgba(243,239,226,0.24)" strokeWidth="1.4" />
+                      <circle cx="28" cy="94" r="4" fill="#d7ff2f" opacity="0.55" />
+                      <circle cx="84" cy="94" r="4" fill="#d7ff2f" opacity="0.55" />
+
+                      <path d="M33 256h46" stroke="url(#dwTruckMetal)" strokeWidth="7" />
+                      <path d="M42 244h28l8 12-8 12H42l-8-12z" fill="rgba(232,224,201,0.22)" stroke="rgba(243,239,226,0.62)" strokeWidth="1.4" />
+                      <circle cx="47" cy="251" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="65" cy="251" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="47" cy="261" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="65" cy="261" r="2.4" fill="#f3efe2" opacity="0.64" />
+                      <circle cx="28" cy="256" r="13" fill="url(#dwWheelRubber)" stroke="rgba(243,239,226,0.24)" strokeWidth="1.4" />
+                      <circle cx="84" cy="256" r="13" fill="url(#dwWheelRubber)" stroke="rgba(243,239,226,0.24)" strokeWidth="1.4" />
+                      <circle cx="28" cy="256" r="4" fill="#ff4f8b" opacity="0.58" />
+                      <circle cx="84" cy="256" r="4" fill="#ff4f8b" opacity="0.58" />
+                    </g>
+                  </svg>
                 </div>
               </div>
               <div className="dw-modal__copy">

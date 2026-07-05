@@ -16,15 +16,15 @@ const MAX_WALL = 24;
 const DEFAULT_SAVE: DeckSave = { decks: [], totalGenerated: 0 };
 
 const avatarPrompt = [
-  'Edge-to-edge vertical skateboard deck graphic crop, adult underground street art, gritty spray paint portrait inspired by the reference face,',
-  'no visible board outline, no surrounding wall background, the artwork fills the entire tall frame, sticker collage, halftone photocopy texture, scratches, tape residue,',
-  'premium board graphic, full deck artwork surface, no wheels, no black side margins, not cute, not childish, not cartoon, no readable brand logos',
+  'Full-bleed vertical street art texture for a skateboard deck, adult underground spray paint portrait inspired by the reference face,',
+  'the artwork fills the entire rectangular image edge to edge, strongest face/detail composition centered vertically, sticker collage, halftone photocopy texture, scratches, tape residue,',
+  'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, not cute, not childish, not cartoon, no readable brand logos',
 ].join(' ');
 
 const basicPrompt = [
-  'Edge-to-edge vertical skateboard deck graphic crop, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
-  'no visible board outline, no surrounding wall background, the artwork fills the entire tall frame, underground skate shop wall aesthetic,',
-  'full deck artwork surface, no wheels, no black side margins, no portrait, no readable brand logos',
+  'Full-bleed vertical street art texture for a skateboard deck, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
+  'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered vertically, underground skate shop wall aesthetic,',
+  'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, no portrait, no readable brand logos',
 ].join(' ');
 
 function makeId() {

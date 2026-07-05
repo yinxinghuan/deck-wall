@@ -24,7 +24,7 @@
 ## 3. 核心模块
 
 - 状态管理：`useDeckWall()` 用 `useGameSave<DeckSave>('deck-wall')` 加本地 `mirror`，只在 `savedData` 首次加载后 seed 一次，后续所有写入从 mirror 读改写，避免多次生成覆盖旧作品。
-- 生成逻辑：`generateDeck()` 判断 `profile.head_url`；有头像时把 `head_url` 作为 `ref_url` 传给 `useGenImage.generate()`，无头像时只传基础板 prompt。prompt 明确要求竖向滑板喷绘图面铺满画面、不要实体板外轮廓、不要墙面背景或两侧黑边。成功后生成 `DeckEntry`、写入 mirror、`persist()`，并弹出作品预览。
+- 生成逻辑：`generateDeck()` 判断 `profile.head_url`；有头像时把 `head_url` 作为 `ref_url` 传给 `useGenImage.generate()`，无头像时只传基础板 prompt。prompt 明确要求全幅竖向喷绘纹理铺满矩形画面、重点构图居中、不要滑板外轮廓/板身剪影/墙面背景/两侧黑边；游戏里的滑板形状负责最终裁切。成功后生成 `DeckEntry`、写入 mirror、`persist()`，并弹出作品预览。
 - 公共墙：`refreshWall()` 调 `/note/aigram/ai/game/get/data/list`，flatten 每个用户存档里的全部 `decks`，按 `createdAt` 倒序截取 24 个；不会只取 `decks[0]`。
 - optimistic merge：真实墙面渲染前把 `mine` 中云端还没同步的作品合并到 `wall` 前面，用 `entry.id` 去重，解决保存防抖带来的 1-3 秒空窗。
 - 跨用户身份：公共墙拉取每个作者的 `name/head_url`；列表墙不显示作者信息，详情弹层显示正反两面、头像 + 名字；非本人点击详情作者 chip 用 `openAigramProfile(userId)` 打开主页，竖向滚动墙内的作品点击用 `onClick`。
