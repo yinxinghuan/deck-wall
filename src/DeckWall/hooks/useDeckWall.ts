@@ -18,25 +18,22 @@ const ALPHA_REF_URL = 'https://images.aiwaves.tech/bag-watermark/alteru_white_10
 
 const avatarPrompt = [
   'Full-bleed vertical street art texture for a skateboard deck, adult underground spray paint portrait inspired by the reference face,',
-  'the artwork fills the entire rectangular image edge to edge, strongest face/detail composition centered vertically, sticker collage, halftone photocopy texture, scratches, tape residue,',
+  'the artwork fills the entire rectangular image edge to edge, strongest face/detail composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly, sticker collage, halftone photocopy texture, scratches, tape residue,',
   'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, not cute, not childish, not cartoon, no readable brand logos',
 ].join(' ');
 
 const basicPrompt = [
   'Full-bleed vertical street art texture for a skateboard deck, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
-  'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered vertically, underground skate shop wall aesthetic,',
+  'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly, underground skate shop wall aesthetic,',
   'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, no portrait, no readable brand logos',
 ].join(' ');
 
-function buildBackPrompt(hasAvatar: boolean) {
-  const frontSystem = hasAvatar
-    ? 'Coordinate with a gritty portrait sticker-collage front: hot pink, dirty cream, deep black, halftone dots, photocopy grain, tape residue, scratched ink.'
-    : 'Coordinate with a raw tag-based front: acid yellow, hot pink, cyan, black ink, scraped stickers, spray-paint overspray, rough street marks.';
+function buildBackPrompt() {
   return [
     'Full-bleed vertical skateboard deck BACK graphic, created from the reference AlterU Greek alpha logo.',
-    'The alpha logo is the central hero mark, large and unmistakable, integrated into gritty underground skate-shop artwork.',
-    frontSystem,
-    'Artwork fills the entire rectangular image edge to edge, strongest logo/detail composition centered vertically.',
+    'The alpha logo is the central hero mark, large and unmistakable, a clean brand-side graphic for the underside of a skateboard deck.',
+    'Simpler and more restrained than the front artwork: deep black, dirty cream, one small hot pink or acid yellow accent, subtle halftone grain, sparse scratches, premium skate brand identity.',
+    'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
     'Do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins.',
     'No wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
   ].join(' ');
@@ -55,7 +52,7 @@ function demoDeck(index: number): DeckEntry {
     imageUrl: REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length],
     backImageUrl: REVIEW_BACK_IMAGE,
     prompt: index % 3 === 0 ? basicPrompt : avatarPrompt,
-    backPrompt: buildBackPrompt(index % 3 !== 0),
+    backPrompt: buildBackPrompt(),
     hasAvatar: index % 3 !== 0,
     userId: `demo-${index}`,
     userName: ['Maya', 'Jun', 'Rae', 'Noor', 'Ari', 'Lux', 'Theo', 'Iris'][index % 8],
@@ -213,7 +210,7 @@ export function useDeckWall() {
         prompt,
         ...(hasAvatar ? { ref_url: profile!.head_url! } : {}),
       });
-      const backPrompt = buildBackPrompt(hasAvatar);
+      const backPrompt = buildBackPrompt();
       const backImageUrl = await gen.generate({
         prompt: backPrompt,
         ref_url: ALPHA_REF_URL,

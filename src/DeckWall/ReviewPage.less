@@ -171,6 +171,39 @@
   display: none;
 }
 
+.dwr-final__detail {
+  position: relative;
+  min-height: 248px;
+  margin: -116px 0 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 22px;
+  pointer-events: none;
+
+  .dwr-deck {
+    width: 76px;
+    height: 236px;
+    transform: translate(0, 0);
+  }
+
+  > span {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(243,239,226,0.16);
+    border-radius: 999px;
+    padding: 7px 11px;
+    background: rgba(8,8,10,0.78);
+    color: #23d6ff;
+    font-size: 8px;
+    font-weight: 1000;
+    letter-spacing: 0.16em;
+    white-space: nowrap;
+  }
+}
+
 .dwr-deck {
   position: relative;
   width: 70px;
@@ -186,7 +219,7 @@
     border-radius: 35px;
     background-color: #101014;
     background-image: var(--deck-img);
-    background-size: auto 124%;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     box-shadow: 0 18px 38px rgba(0,0,0,0.52);
@@ -201,6 +234,28 @@
   }
 }
 
+.dwr-deck--back {
+  > span {
+    background-image:
+      linear-gradient(180deg, rgba(8,8,10,0.04), rgba(8,8,10,0.16)),
+      var(--deck-back-img);
+    background-size: cover, cover;
+    background-position: center, center;
+  }
+}
+
+.dwr-trucks {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: calc(100% + 38px);
+  height: 100%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,0.5));
+}
+
 .dwr-deck--large {
   width: 138px;
   height: 430px;
@@ -208,6 +263,22 @@
 
   > span {
     border-radius: 66px;
+  }
+}
+
+.dwr-state__pair {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+
+  .dwr-deck--large {
+    width: 108px;
+    height: 336px;
+
+    > span {
+      border-radius: 54px;
+    }
   }
 }
 
@@ -245,6 +316,89 @@
   max-width: 980px;
   margin: 0 auto;
   padding: 10px 22px 30px;
+}
+
+.dwr-detail-review {
+  width: min(1180px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 0 0 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 480px);
+  align-items: center;
+  gap: 42px;
+  border-top: 1px solid rgba(243,239,226,0.14);
+
+  h2 {
+    margin: 18px 0 0;
+    color: #f3efe2;
+    font-family: Impact, Haettenschweiler, 'Arial Black', Inter, sans-serif;
+    font-size: clamp(38px, 5vw, 72px);
+    font-style: italic;
+    font-weight: 900;
+    line-height: 0.88;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    transform: skewX(-7deg);
+    text-shadow: 4px 4px 0 rgba(255,79,139,0.56);
+  }
+
+  p {
+    max-width: 600px;
+    margin: 22px 0 0;
+    color: rgba(243, 239, 226, 0.62);
+    font-size: 19px;
+    font-weight: 650;
+    line-height: 1.5;
+  }
+}
+
+.dwr-wheel-variants {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 94px));
+  gap: 18px;
+
+  figure {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  figcaption {
+    color: #d7ff2f;
+    font-size: 8px;
+    font-weight: 1000;
+    letter-spacing: 0.16em;
+  }
+
+  .dwr-deck {
+    width: 62px;
+    height: 194px;
+    transform: translate(0, 0);
+  }
+}
+
+.dwr-detail-review__boards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: end;
+
+  figure {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+  }
+
+  figcaption {
+    color: #23d6ff;
+    font-size: 9px;
+    font-weight: 1000;
+    letter-spacing: 0.14em;
+    text-align: center;
+  }
 }
 
 .dwr-section-head h2 {
@@ -331,11 +485,17 @@
 
 @media (max-width: 1040px) {
   .dwr-hero,
-  .dwr-states {
+  .dwr-states,
+  .dwr-detail-review {
     grid-template-columns: 1fr;
   }
 
   .dwr-phone {
+    margin: 0 auto;
+  }
+
+  .dwr-detail-review__boards {
+    max-width: 480px;
     margin: 0 auto;
   }
 }
@@ -355,6 +515,17 @@
 
   .dwr-final {
     min-height: 642px;
+  }
+
+  .dwr-final__detail {
+    min-height: 218px;
+    margin-top: -102px;
+    gap: 16px;
+
+    .dwr-deck {
+      width: 66px;
+      height: 206px;
+    }
   }
 
   .dwr-hero h1 {

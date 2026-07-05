@@ -1,4 +1,6 @@
-import { REVIEW_DECK_IMAGES, type WallEntry } from './types';
+import type { CSSProperties } from 'react';
+import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
+import { REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type WallEntry } from './types';
 import './ReviewPage.less';
 
 const names = ['Maya', 'Jun', 'Rae', 'Noor', 'Ari', 'Lux', 'Theo', 'Iris', 'Sol', 'Nia', 'Bo', 'Kai'];
@@ -9,6 +11,7 @@ function mockDeck(index: number, hasAvatar = index % 3 !== 1): WallEntry {
     createdAt: Date.now() - index * 60000,
     mode: hasAvatar ? 'avatar' : 'basic',
     imageUrl: REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length],
+    backImageUrl: REVIEW_BACK_IMAGE,
     prompt: '',
     hasAvatar,
     userId: `review-${index}`,
@@ -25,13 +28,29 @@ function boardStyle(index: number) {
     '--y': '0px',
     '--z': `${20 + row * 10 + col}`,
     '--deck-img': `url(${new URL(REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length], document.baseURI).href})`,
-  } as React.CSSProperties;
+    '--deck-back-img': `url(${new URL(REVIEW_BACK_IMAGE, document.baseURI).href})`,
+  } as CSSProperties;
 }
 
-function MiniDeck({ index, large = false }: { index: number; large?: boolean }) {
+function wheelVariantForIndex(index: number): WheelVariant {
+  return (['charcoal', 'cream', 'mint'] as WheelVariant[])[index % 3];
+}
+
+function MiniDeck({
+  index,
+  large = false,
+  side = 'front',
+  wheelVariant = wheelVariantForIndex(index),
+}: {
+  index: number;
+  large?: boolean;
+  side?: 'front' | 'back';
+  wheelVariant?: WheelVariant;
+}) {
   return (
-    <span className={`dwr-deck ${large ? 'dwr-deck--large' : ''}`} style={boardStyle(index)}>
+    <span className={`dwr-deck dwr-deck--${side} ${large ? 'dwr-deck--large' : ''}`} style={boardStyle(index)}>
       <span />
+      {side === 'back' && <SkateTruckSvg className="dwr-trucks" variant={wheelVariant} />}
     </span>
   );
 }
@@ -66,7 +85,14 @@ function StateCard({
         <WallPreview count={8} />
       ) : (
         <div className="dwr-state__single">
-          <MiniDeck index={mode === 'basic' ? 1 : mode === 'complete' ? 8 : 0} large />
+          {mode === 'complete' ? (
+            <div className="dwr-state__pair">
+              <MiniDeck index={8} large />
+              <MiniDeck index={8} side="back" large />
+            </div>
+          ) : (
+            <MiniDeck index={mode === 'basic' ? 1 : 0} large />
+          )}
           {mode === 'generating' && <span className="dwr-spray">封层上墙</span>}
         </div>
       )}
@@ -108,11 +134,46 @@ export default function ReviewPage() {
               <strong>DECK WALL</strong>
             </header>
             <WallPreview count={12} />
+            <div className="dwr-final__detail">
+              <MiniDeck index={0} />
+              <MiniDeck index={0} side="back" />
+              <span>DETAIL: FRONT / BACK</span>
+            </div>
             <div className="dwr-final__bar">
               <span>头像高级板</span>
               <button>GENERATE MY DECK</button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="dwr-detail-review">
+        <div>
+          <span className="dwr-kicker">Final detail</span>
+          <h2>正面是玩家喷绘，背面是 AlterU α 标记。</h2>
+          <p>
+            背面不是把正面变暗，也不需要强行呼应正面；它是第二次生成的新图：
+            以 AlterU α Logo 为中心，做成更克制、更品牌化的滑板背面。
+            SVG 轮架、轮子、螺丝和轴承会叠在这张品牌面上。
+          </p>
+          <div className="dwr-wheel-variants">
+            {(['charcoal', 'cream', 'mint'] as WheelVariant[]).map((variant, index) => (
+              <figure key={variant}>
+                <MiniDeck index={index + 3} side="back" wheelVariant={variant} />
+                <figcaption>{variant === 'charcoal' ? 'BLACK' : variant === 'cream' ? 'CREAM' : 'MINT'}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+        <div className="dwr-detail-review__boards">
+          <figure>
+            <MiniDeck index={0} large />
+            <figcaption>FRONT / AVATAR STYLE</figcaption>
+          </figure>
+          <figure>
+            <MiniDeck index={0} side="back" large wheelVariant="cream" />
+            <figcaption>BACK / ALTERU MARK</figcaption>
+          </figure>
         </div>
       </section>
 
