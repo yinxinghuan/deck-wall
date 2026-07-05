@@ -1,5 +1,5 @@
 import { useEffect, type CSSProperties } from 'react';
-import { FIELD_H, FIELD_W, type WallEntry } from './types';
+import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type WallEntry } from './types';
 import { useDeckWall } from './hooks/useDeckWall';
 import { t } from './i18n';
 import { playClick, playFail, playGenerate, playOpen, playSuccess, resumeAudio } from './utils/sounds';
@@ -18,11 +18,15 @@ function deckStyle(entry: WallEntry, index: number): CSSProperties {
   const imageUrl = entry.imageUrl.startsWith('http')
     ? entry.imageUrl
     : new URL(entry.imageUrl, document.baseURI).href;
+  const backUrl = (entry.backImageUrl || REVIEW_BACK_IMAGE).startsWith('http')
+    ? (entry.backImageUrl || REVIEW_BACK_IMAGE)
+    : new URL(entry.backImageUrl || REVIEW_BACK_IMAGE, document.baseURI).href;
   return {
     '--x': `${xPattern[col]}px`,
     '--y': '0px',
     '--z': `${20 + row * 10 + col}`,
     '--deck-img': `url(${imageUrl})`,
+    '--deck-back-img': `url(${backUrl})`,
   } as CSSProperties;
 }
 

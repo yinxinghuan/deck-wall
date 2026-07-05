@@ -9,7 +9,9 @@ export interface DeckEntry {
   createdAt: number;
   mode: DeckMode;
   imageUrl: string;
+  backImageUrl?: string;
   prompt: string;
+  backPrompt?: string;
   hasAvatar: boolean;
   userId: string;
   userName?: string;
@@ -45,3 +47,4 @@ export const REVIEW_DECK_IMAGES = Array.from(
   { length: 12 },
   (_, index) => `./img/review-decks/deck-${String(index).padStart(2, '0')}.jpg`,
 );
+export const REVIEW_BACK_IMAGE = './img/review-back.svg';

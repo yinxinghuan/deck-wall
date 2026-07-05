@@ -19,12 +19,13 @@
 - `src/DeckWall/utils/sounds.ts`：Web Audio 合成点击、生成、成功、失败、打开预览音效。
 - `public/img/review-deck-sheet.jpg`：评审源图，保留用于追溯假作品来源。
 - `public/img/review-decks/deck-00.jpg` 到 `deck-11.jpg`：评审页和离线 demo 实际使用的 12 张独立竖向喷绘图面，已经紧裁到板面内部，避免 sprite 裁切、胶囊遮罩或实体板背景导致变形和黑边。
+- `public/img/review-back.svg`：旧作品和离线 demo 的背面 fallback，以 AlterU α 标志为核心；真实生成作品会保存 `backImageUrl`。
 - `public/poster.svg`：游戏封面。
 
 ## 3. 核心模块
 
 - 状态管理：`useDeckWall()` 用 `useGameSave<DeckSave>('deck-wall')` 加本地 `mirror`，只在 `savedData` 首次加载后 seed 一次，后续所有写入从 mirror 读改写，避免多次生成覆盖旧作品。
-- 生成逻辑：`generateDeck()` 判断 `profile.head_url`；有头像时把 `head_url` 作为 `ref_url` 传给 `useGenImage.generate()`，无头像时只传基础板 prompt。prompt 明确要求全幅竖向喷绘纹理铺满矩形画面、重点构图居中、不要滑板外轮廓/板身剪影/墙面背景/两侧黑边；游戏里的滑板形状负责最终裁切。成功后生成 `DeckEntry`、写入 mirror、`persist()`，并弹出作品预览。
+- 生成逻辑：`generateDeck()` 判断 `profile.head_url`；有头像时把 `head_url` 作为正面 `ref_url` 传给 `useGenImage.generate()`，无头像时只传基础板 prompt。正面 prompt 明确要求全幅竖向喷绘纹理铺满矩形画面、重点构图居中、不要滑板外轮廓/板身剪影/墙面背景/两侧黑边；游戏里的滑板形状负责最终裁切。正面完成后再调用第二次 `useGenImage.generate()` 生成背面，`ref_url` 固定为时间胶囊同款公网 α Logo `https://images.aiwaves.tech/bag-watermark/alteru_white_1024.png`，保存到 `backImageUrl`。两张图都成功后生成 `DeckEntry`、写入 mirror、`persist()`，并弹出作品预览。
 - 公共墙：`refreshWall()` 调 `/note/aigram/ai/game/get/data/list`，flatten 每个用户存档里的全部 `decks`，按 `createdAt` 倒序截取 24 个；不会只取 `decks[0]`。
 - optimistic merge：真实墙面渲染前把 `mine` 中云端还没同步的作品合并到 `wall` 前面，用 `entry.id` 去重，解决保存防抖带来的 1-3 秒空窗。
 - 跨用户身份：公共墙拉取每个作者的 `name/head_url`；列表墙不显示作者信息，详情弹层显示正反两面、头像 + 名字；非本人点击详情作者 chip 用 `openAigramProfile(userId)` 打开主页，竖向滚动墙内的作品点击用 `onClick`。

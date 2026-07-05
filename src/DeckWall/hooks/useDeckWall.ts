@@ -8,12 +8,13 @@ import {
 } from '@shared/runtime';
 import { useGenImage } from '@shared/runtime';
 import { useGameSave } from '@shared/save';
-import { FIELD_H, FIELD_W, REVIEW_DECK_IMAGES, type DeckEntry, type DeckSave, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
+import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type DeckEntry, type DeckSave, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
 
 const MAX_MINE = 12;
 const MAX_WALL = 24;
 
 const DEFAULT_SAVE: DeckSave = { decks: [], totalGenerated: 0 };
+const ALPHA_REF_URL = 'https://images.aiwaves.tech/bag-watermark/alteru_white_1024.png';
 
 const avatarPrompt = [
   'Full-bleed vertical street art texture for a skateboard deck, adult underground spray paint portrait inspired by the reference face,',
@@ -27,6 +28,20 @@ const basicPrompt = [
   'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, no portrait, no readable brand logos',
 ].join(' ');
 
+function buildBackPrompt(hasAvatar: boolean) {
+  const frontSystem = hasAvatar
+    ? 'Coordinate with a gritty portrait sticker-collage front: hot pink, dirty cream, deep black, halftone dots, photocopy grain, tape residue, scratched ink.'
+    : 'Coordinate with a raw tag-based front: acid yellow, hot pink, cyan, black ink, scraped stickers, spray-paint overspray, rough street marks.';
+  return [
+    'Full-bleed vertical skateboard deck BACK graphic, created from the reference AlterU Greek alpha logo.',
+    'The alpha logo is the central hero mark, large and unmistakable, integrated into gritty underground skate-shop artwork.',
+    frontSystem,
+    'Artwork fills the entire rectangular image edge to edge, strongest logo/detail composition centered vertically.',
+    'Do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins.',
+    'No wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
+  ].join(' ');
+}
+
 function makeId() {
   if (crypto?.randomUUID) return crypto.randomUUID();
   return `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -38,7 +53,9 @@ function demoDeck(index: number): DeckEntry {
     createdAt: Date.now() - index * 90000,
     mode: index % 3 === 0 ? 'basic' : 'avatar',
     imageUrl: REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length],
+    backImageUrl: REVIEW_BACK_IMAGE,
     prompt: index % 3 === 0 ? basicPrompt : avatarPrompt,
+    backPrompt: buildBackPrompt(index % 3 !== 0),
     hasAvatar: index % 3 !== 0,
     userId: `demo-${index}`,
     userName: ['Maya', 'Jun', 'Rae', 'Noor', 'Ari', 'Lux', 'Theo', 'Iris'][index % 8],
@@ -196,13 +213,20 @@ export function useDeckWall() {
         prompt,
         ...(hasAvatar ? { ref_url: profile!.head_url! } : {}),
       });
+      const backPrompt = buildBackPrompt(hasAvatar);
+      const backImageUrl = await gen.generate({
+        prompt: backPrompt,
+        ref_url: ALPHA_REF_URL,
+      });
       const now = Date.now();
       const deck: DeckEntry = {
         id: makeId(),
         createdAt: now,
         mode: hasAvatar ? 'avatar' : 'basic',
         imageUrl,
+        backImageUrl,
         prompt,
+        backPrompt,
         hasAvatar,
         userId: telegramId || 'self',
         userName: profile?.name,
