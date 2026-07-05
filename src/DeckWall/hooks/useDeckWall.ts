@@ -34,7 +34,7 @@ function buildBackPrompt() {
     'The alpha logo is the central hero mark, large and unmistakable, a clean brand-side graphic for the underside of a skateboard deck.',
     'Simpler and more restrained than the front artwork: deep black, dirty cream, one small hot pink or acid yellow accent, subtle halftone grain, sparse scratches, premium skate brand identity.',
     'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
-    'Do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins.',
+    'Do not draw the skateboard outline, do not draw a board silhouette, no rounded border, no frame, no inner rim, no edge stroke, no surrounding wall background, no black side margins.',
     'No wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
   ].join(' ');
 }

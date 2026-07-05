@@ -153,9 +153,9 @@ export default function DeckWall() {
           <div className="dw-modal" role="dialog" aria-modal="true" onClick={() => game.setSelected(null)}>
             <div className="dw-modal__body" onClick={ev => ev.stopPropagation()}>
               <div className="dw-modal__boards">
-                <div className="dw-modal__deck dw-modal__deck--front" style={deckStyle(game.selected, 0)}>
+                <div className="dw-modal__deck dw-modal__deck--front dw-modal__deck--brand" style={deckStyle(game.selected, 0)}>
                   <span className="dw-modal__label">Front</span>
-                  <span className="dw-modal__art" />
+                  <span className="dw-modal__brand-art" />
                 </div>
                 <div className="dw-modal__deck dw-modal__deck--back" style={deckStyle(game.selected, 0)}>
                   <span className="dw-modal__label">Back</span>

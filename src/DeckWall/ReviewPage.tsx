@@ -39,12 +39,12 @@ function wheelVariantForIndex(index: number): WheelVariant {
 function MiniDeck({
   index,
   large = false,
-  side = 'front',
+  side = 'wall',
   wheelVariant = wheelVariantForIndex(index),
 }: {
   index: number;
   large?: boolean;
-  side?: 'front' | 'back';
+  side?: 'wall' | 'front' | 'back';
   wheelVariant?: WheelVariant;
 }) {
   return (
@@ -87,7 +87,7 @@ function StateCard({
         <div className="dwr-state__single">
           {mode === 'complete' ? (
             <div className="dwr-state__pair">
-              <MiniDeck index={8} large />
+              <MiniDeck index={8} side="front" large />
               <MiniDeck index={8} side="back" large />
             </div>
           ) : (
@@ -135,7 +135,7 @@ export default function ReviewPage() {
             </header>
             <WallPreview count={12} />
             <div className="dwr-final__detail">
-              <MiniDeck index={0} />
+              <MiniDeck index={0} side="front" />
               <MiniDeck index={0} side="back" />
               <span>DETAIL: FRONT / BACK</span>
             </div>
@@ -150,11 +150,10 @@ export default function ReviewPage() {
       <section className="dwr-detail-review">
         <div>
           <span className="dwr-kicker">Final detail</span>
-          <h2>正面是玩家喷绘，背面是 AlterU α 标记。</h2>
+          <h2>正面是 AlterU α 标记，背面是玩家喷绘。</h2>
           <p>
-            背面不是把正面变暗，也不需要强行呼应正面；它是第二次生成的新图：
-            以 AlterU α Logo 为中心，做成更克制、更品牌化的滑板背面。
-            SVG 轮架、轮子、螺丝和轴承会叠在这张品牌面上。
+            墙上看到的是不带轮子的彩色背面。点进详情后，正面是黑底 AlterU α Logo 品牌面，
+            视觉更暗、比例更小；背面才是全彩作品图，并在这面叠加 SVG 轮架、轮子、螺丝和轴承。
           </p>
           <div className="dwr-wheel-variants">
             {(['charcoal', 'cream', 'mint'] as WheelVariant[]).map((variant, index) => (
@@ -167,12 +166,12 @@ export default function ReviewPage() {
         </div>
         <div className="dwr-detail-review__boards">
           <figure>
-            <MiniDeck index={0} large />
-            <figcaption>FRONT / AVATAR STYLE</figcaption>
+            <MiniDeck index={0} side="front" large />
+            <figcaption>FRONT / ALTERU MARK</figcaption>
           </figure>
           <figure>
             <MiniDeck index={0} side="back" large wheelVariant="cream" />
-            <figcaption>BACK / ALTERU MARK</figcaption>
+            <figcaption>BACK / AVATAR STYLE</figcaption>
           </figure>
         </div>
       </section>
