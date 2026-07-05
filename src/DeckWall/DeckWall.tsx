@@ -193,7 +193,7 @@ export default function DeckWall() {
               <div className="dw-production__deck" aria-hidden>
                 <span className="dw-production__spray dw-production__spray--one" />
                 <span className="dw-production__spray dw-production__spray--two" />
-                <span className="dw-production__brand">α</span>
+                <span className="dw-production__grain" />
               </div>
               <div className="dw-production__labels" aria-hidden>
                 <span>{t('productionDeckSide')}</span>

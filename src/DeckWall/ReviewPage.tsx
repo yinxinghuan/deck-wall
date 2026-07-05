@@ -151,9 +151,9 @@ export default function ReviewPage() {
       <section className="dwr-detail-review">
         <div>
           <span className="dwr-kicker">Final detail</span>
-          <h2>正面是 AlterU α 标记，背面是玩家喷绘。</h2>
+          <h2>正面是 AlterU 品牌面，背面是玩家喷绘。</h2>
           <p>
-            墙上看到的是不带轮子的彩色背面。点进详情后，正面是黑底 AlterU α Logo 品牌面，
+            墙上看到的是不带轮子的彩色背面。点进详情后，正面是 AlterU 平台 Logo 品牌面，
             视觉更暗、比例更小；背面才是全彩作品图，并在这面叠加 SVG 轮架、轮子、螺丝和轴承。
           </p>
           <div className="dwr-wheel-variants">

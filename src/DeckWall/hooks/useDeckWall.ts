@@ -17,19 +17,19 @@ const DEFAULT_SAVE: DeckSave = { decks: [], totalGenerated: 0 };
 const ALPHA_REF_URL = 'https://images.aiwaves.tech/bag-watermark/alteru_white_1024.png';
 
 const avatarPrompt = [
-  'Full-bleed vertical street art graphic for a skateboard deck, using the reference avatar only as raw identity inspiration.',
+  'Full-bleed vertical rectangular street art graphic intended to be clipped by the app into a skateboard later, using the reference avatar only as raw identity inspiration.',
   'Extract broad traits only: face silhouette, hairstyle direction, expression energy, color temperature, accessory hints, and attitude.',
   'Reinvent those traits as an original underground skate poster character, stencil mask, torn sticker collage, halftone photocopy texture, spray paint overspray, scratches, tape residue, and screenprint registration errors.',
   'The final artwork should feel like a second-generation graphic interpretation of the person, not a pasted avatar and not a literal photo portrait.',
-  'Artwork fills the entire rectangular image edge to edge, strongest visual mass centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
+  'Artwork fills the entire rectangular image edge to edge, with the strongest visual mass centered in the middle vertical strip.',
   'Do not preserve the exact face, do not copy the photo composition, do not paste a circular avatar, do not create a photorealistic headshot, do not make a cute caricature.',
-  'Do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, not childish, no readable brand logos',
+  'Do not include any pre-cut outer shape, object silhouette, border, frame, surrounding wall background, black side margins, wheels, trucks, childish styling, or readable brand logos.',
 ].join(' ');
 
 const basicPrompt = [
-  'Full-bleed vertical street art texture for a skateboard deck, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
-  'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly, underground skate shop wall aesthetic,',
-  'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, no portrait, no readable brand logos',
+  'Full-bleed vertical rectangular street art texture intended to be clipped by the app into a skateboard later, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
+  'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered in the middle vertical strip, underground skate shop wall aesthetic,',
+  'do not include any pre-cut outer shape, object silhouette, border, frame, surrounding wall background, black side margins, wheels, trucks, portrait, or readable brand logos',
 ].join(' ');
 
 function variantForSeed(seed: string): DeckVariant {
@@ -40,18 +40,18 @@ function variantForSeed(seed: string): DeckVariant {
 
 function buildBackPrompt(variant: DeckVariant = 'charcoal') {
   const palette = {
-    charcoal: 'matte black deck field, dirty cream alpha mark, one tiny hot pink registration accent, black hardware family',
-    cream: 'warm cream deck field, black alpha mark, soft silver scuffs, black micro accents, cream wheel family',
-    mint: 'deep black deck field, mint aqua alpha mark, cyan edge glints, restrained white scuffs, mint wheel family',
+    charcoal: 'matte black field, dirty cream platform logo mark, one tiny hot pink registration accent, black hardware family',
+    cream: 'warm cream field, black platform logo mark, soft silver scuffs, black micro accents, cream wheel family',
+    mint: 'deep black field, mint aqua platform logo mark, cyan edge glints, restrained white scuffs, mint wheel family',
   }[variant];
   return [
-    'Full-bleed vertical skateboard deck BACK graphic, created from the reference AlterU Greek alpha logo.',
-    'The alpha logo is the central hero mark but deliberately smaller and more premium: it should occupy about 38 percent of the board height, not fill the whole deck.',
+    'Full-bleed vertical rectangular brand-side graphic, created from the reference AlterU platform logo image.',
+    'Use the reference logo shape as the central hero mark, but deliberately smaller and more premium: it should occupy about 28 percent of the image height, not fill the whole artwork.',
     `Palette version: ${palette}.`,
     'Simpler and more restrained than the color artwork: generous negative space, subtle halftone grain, sparse scratches, premium skate brand identity.',
-    'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
-    'Do not draw the skateboard outline, do not draw a board silhouette, no rounded border, no frame, no inner rim, no edge stroke, no surrounding wall background, no black side margins.',
-    'No wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
+    'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip.',
+    'Do not include any pre-cut outer shape, object silhouette, rounded border, frame, inner rim, edge stroke, surrounding wall background, or black side margins.',
+    'No invented alphabet letter, no substitute symbol, no wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
   ].join(' ');
 }
 
