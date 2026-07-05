@@ -8,7 +8,7 @@ import {
 } from '@shared/runtime';
 import { useGenImage } from '@shared/runtime';
 import { useGameSave } from '@shared/save';
-import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type DeckEntry, type DeckSave, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
+import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type DeckEntry, type DeckSave, type DeckVariant, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
 
 const MAX_MINE = 12;
 const MAX_WALL = 24;
@@ -17,9 +17,13 @@ const DEFAULT_SAVE: DeckSave = { decks: [], totalGenerated: 0 };
 const ALPHA_REF_URL = 'https://images.aiwaves.tech/bag-watermark/alteru_white_1024.png';
 
 const avatarPrompt = [
-  'Full-bleed vertical street art texture for a skateboard deck, adult underground spray paint portrait inspired by the reference face,',
-  'the artwork fills the entire rectangular image edge to edge, strongest face/detail composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly, sticker collage, halftone photocopy texture, scratches, tape residue,',
-  'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, not cute, not childish, not cartoon, no readable brand logos',
+  'Full-bleed vertical street art graphic for a skateboard deck, using the reference avatar only as raw identity inspiration.',
+  'Extract broad traits only: face silhouette, hairstyle direction, expression energy, color temperature, accessory hints, and attitude.',
+  'Reinvent those traits as an original underground skate poster character, stencil mask, torn sticker collage, halftone photocopy texture, spray paint overspray, scratches, tape residue, and screenprint registration errors.',
+  'The final artwork should feel like a second-generation graphic interpretation of the person, not a pasted avatar and not a literal photo portrait.',
+  'Artwork fills the entire rectangular image edge to edge, strongest visual mass centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
+  'Do not preserve the exact face, do not copy the photo composition, do not paste a circular avatar, do not create a photorealistic headshot, do not make a cute caricature.',
+  'Do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, not childish, no readable brand logos',
 ].join(' ');
 
 const basicPrompt = [
@@ -28,11 +32,23 @@ const basicPrompt = [
   'do not draw the skateboard outline, do not draw a board silhouette, no surrounding wall background, no black side margins, no wheels, no trucks, no portrait, no readable brand logos',
 ].join(' ');
 
-function buildBackPrompt() {
+function variantForSeed(seed: string): DeckVariant {
+  const variants: DeckVariant[] = ['charcoal', 'cream', 'mint'];
+  const score = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return variants[score % variants.length];
+}
+
+function buildBackPrompt(variant: DeckVariant = 'charcoal') {
+  const palette = {
+    charcoal: 'matte black deck field, dirty cream alpha mark, one tiny hot pink registration accent, black hardware family',
+    cream: 'warm cream deck field, black alpha mark, soft silver scuffs, black micro accents, cream wheel family',
+    mint: 'deep black deck field, mint aqua alpha mark, cyan edge glints, restrained white scuffs, mint wheel family',
+  }[variant];
   return [
     'Full-bleed vertical skateboard deck BACK graphic, created from the reference AlterU Greek alpha logo.',
-    'The alpha logo is the central hero mark, large and unmistakable, a clean brand-side graphic for the underside of a skateboard deck.',
-    'Simpler and more restrained than the front artwork: deep black, dirty cream, one small hot pink or acid yellow accent, subtle halftone grain, sparse scratches, premium skate brand identity.',
+    'The alpha logo is the central hero mark but deliberately smaller and more premium: it should occupy about 38 percent of the board height, not fill the whole deck.',
+    `Palette version: ${palette}.`,
+    'Simpler and more restrained than the color artwork: generous negative space, subtle halftone grain, sparse scratches, premium skate brand identity.',
     'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip so a long rounded skateboard mask can crop it cleanly.',
     'Do not draw the skateboard outline, do not draw a board silhouette, no rounded border, no frame, no inner rim, no edge stroke, no surrounding wall background, no black side margins.',
     'No wheels, no trucks, no screws, no extra text, no readable brand name, not cute, not childish, not cartoon.',
@@ -52,8 +68,9 @@ function demoDeck(index: number): DeckEntry {
     imageUrl: REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length],
     backImageUrl: REVIEW_BACK_IMAGE,
     prompt: index % 3 === 0 ? basicPrompt : avatarPrompt,
-    backPrompt: buildBackPrompt(),
+    backPrompt: buildBackPrompt(variantForSeed(`demo-${index}`)),
     hasAvatar: index % 3 !== 0,
+    wheelVariant: variantForSeed(`demo-${index}`),
     userId: `demo-${index}`,
     userName: ['Maya', 'Jun', 'Rae', 'Noor', 'Ari', 'Lux', 'Theo', 'Iris'][index % 8],
   };
@@ -88,6 +105,8 @@ export function useDeckWall() {
   const [wall, setWall] = useState<WallEntry[]>([]);
   const [status, setStatus] = useState<'idle' | 'generating' | 'complete' | 'failed'>('idle');
   const [startedAt, setStartedAt] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [generationPhase, setGenerationPhase] = useState<'idle' | 'art' | 'brand' | 'saving'>('idle');
   const [selected, setSelected] = useState<WallEntry | null>(null);
   const [error, setError] = useState('');
   const [scale, setScale] = useState(1);
@@ -174,6 +193,14 @@ export function useDeckWall() {
     refreshWall().catch(() => {});
   }, [refreshWall]);
 
+  useEffect(() => {
+    if (status !== 'generating' || !startedAt) return;
+    const tick = () => setElapsedMs(Date.now() - startedAt);
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [status, startedAt]);
+
   const mergedWall = useMemo(() => {
     const cloudIds = new Set(wall.map(item => item.id));
     const selfEntries: WallEntry[] = mine
@@ -192,32 +219,40 @@ export function useDeckWall() {
 
   const stageLabel = useMemo(() => {
     if (status !== 'generating') return '';
-    const elapsed = Date.now() - startedAt;
+    if (generationPhase === 'brand') return 'stageBrand';
+    if (generationPhase === 'saving') return 'stageSeal';
+    const elapsed = elapsedMs;
     if (elapsed < 35000) return 'stagePrep';
-    if (elapsed < 120000) return 'stageSpray';
-    return 'stageSeal';
-  }, [status, startedAt]);
+    return 'stageSpray';
+  }, [elapsedMs, generationPhase, status]);
 
   const generateDeck = useCallback(async () => {
     if (!mirror || status === 'generating') return;
     setStatus('generating');
     setStartedAt(Date.now());
+    setElapsedMs(0);
+    setGenerationPhase('art');
     setError('');
     const hasAvatar = !!profile?.head_url;
     const prompt = hasAvatar ? avatarPrompt : basicPrompt;
+    const draftId = makeId();
+    const draftCreatedAt = Date.now();
+    const wheelVariant = variantForSeed(`${draftId}-${draftCreatedAt}`);
     try {
       const imageUrl = await gen.generate({
         prompt,
         ...(hasAvatar ? { ref_url: profile!.head_url! } : {}),
       });
-      const backPrompt = buildBackPrompt();
+      setGenerationPhase('brand');
+      const backPrompt = buildBackPrompt(wheelVariant);
       const backImageUrl = await gen.generate({
         prompt: backPrompt,
         ref_url: ALPHA_REF_URL,
       });
+      setGenerationPhase('saving');
       const now = Date.now();
       const deck: DeckEntry = {
-        id: makeId(),
+        id: draftId,
         createdAt: now,
         mode: hasAvatar ? 'avatar' : 'basic',
         imageUrl,
@@ -225,6 +260,7 @@ export function useDeckWall() {
         prompt,
         backPrompt,
         hasAvatar,
+        wheelVariant,
         userId: telegramId || 'self',
         userName: profile?.name,
         userAvatarUrl: profile?.head_url,
@@ -238,9 +274,11 @@ export function useDeckWall() {
       persist(next);
       setSelected({ ...deck, userId: 'self', isSelf: true });
       setStatus('complete');
+      setGenerationPhase('idle');
       setTimeout(() => refreshWall().catch(() => {}), 1400);
     } catch (e) {
       setStatus('failed');
+      setGenerationPhase('idle');
       setError(e instanceof Error ? e.message : String(e));
     }
   }, [gen, mirror, persist, profile, refreshWall, status]);
@@ -259,6 +297,8 @@ export function useDeckWall() {
     wall: mergedWall,
     status,
     stageLabel,
+    elapsedMs,
+    generationPhase,
     selected,
     setSelected,
     error,

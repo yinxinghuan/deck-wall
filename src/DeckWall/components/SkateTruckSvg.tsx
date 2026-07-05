@@ -1,6 +1,7 @@
 import { useId } from 'react';
+import type { DeckVariant } from '../types';
 
-export type WheelVariant = 'charcoal' | 'cream' | 'mint';
+export type WheelVariant = DeckVariant;
 
 const WHEEL = {
   charcoal: {

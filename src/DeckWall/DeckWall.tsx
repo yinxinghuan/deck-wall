@@ -1,5 +1,5 @@
 import { useEffect, type CSSProperties } from 'react';
-import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type WallEntry } from './types';
+import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type DeckVariant, type WallEntry } from './types';
 import { useDeckWall } from './hooks/useDeckWall';
 import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
 import { t } from './i18n';
@@ -13,11 +13,39 @@ function authorInitial(name?: string) {
 }
 
 function wheelVariantFor(entry: WallEntry): WheelVariant {
+  if (entry.wheelVariant) return entry.wheelVariant;
   const variants: WheelVariant[] = ['charcoal', 'cream', 'mint'];
   const seed = `${entry.id}-${entry.createdAt || 0}`;
   const score = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return variants[score % variants.length];
 }
+
+function productionStep(game: ReturnType<typeof useDeckWall>) {
+  if (game.generationPhase === 'saving') return 3;
+  if (game.generationPhase === 'brand') return 2;
+  return game.elapsedMs < 35000 ? 0 : 1;
+}
+
+function productionProgress(game: ReturnType<typeof useDeckWall>) {
+  const sec = game.elapsedMs / 1000;
+  const step = productionStep(game);
+  if (step === 0) return Math.min(18 + (sec / 35) * 14, 32);
+  if (step === 1) return Math.min(36 + ((sec - 35) / 85) * 22, 58);
+  if (step === 2) return Math.min(68 + Math.sin(sec * 0.9) * 3, 74);
+  return 92;
+}
+
+function productionCopyKey(game: ReturnType<typeof useDeckWall>, hasAvatar: boolean) {
+  if (game.generationPhase === 'brand') return 'productionBrand';
+  if (game.generationPhase === 'saving') return 'productionSaving';
+  return hasAvatar ? 'productionArtAvatar' : 'productionArtBasic';
+}
+
+function productionNoteKey(elapsedMs: number) {
+  return `productionNote${Math.floor(elapsedMs / 9000) % 4}`;
+}
+
+const productionStepKeys = ['stagePrep', 'stageSpray', 'stageBrand', 'stageSeal'] as const;
 
 function deckStyle(entry: WallEntry, index: number): CSSProperties {
   const row = Math.floor(index / 3);
@@ -58,6 +86,8 @@ function DeckCard({
 export default function DeckWall() {
   const game = useDeckWall();
   const hasAvatar = !!game.profile?.head_url;
+  const activeProductionStep = productionStep(game);
+  const productionVariant = (['charcoal', 'cream', 'mint'] as DeckVariant[])[activeProductionStep % 3];
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
@@ -143,11 +173,56 @@ export default function DeckWall() {
           {game.status === 'failed' && <p className="dw-error">{game.error || 'Generation failed.'}</p>}
 
           <button type="button" className="dw-cta" onPointerDown={handleGenerate} disabled={game.generating || !game.profileLoaded}>
-            {game.generating ? t('generating') : hasAvatar ? t('generateAvatar') : t('generateBasic')}
+            <span className="dw-cta__mark">{game.generating ? t('generating') : t('craftCtaTitle')}</span>
+            <span className="dw-cta__copy">{hasAvatar ? t('craftCtaSubAvatar') : t('craftCtaSubBasic')}</span>
+            <span className="dw-cta__arrow" aria-hidden>→</span>
           </button>
 
           {!game.isInAigram && <p className="dw-offplatform">{t('offPlatform')}</p>}
         </section>
+
+        {game.generating && (
+          <section className={`dw-production dw-production--${productionVariant}`} aria-live="polite">
+            <div className="dw-production__top">
+              <span>{t('productionKicker')}</span>
+              <strong>{t('productionTitle')}</strong>
+              <p>{t(productionCopyKey(game, hasAvatar) as any)}</p>
+            </div>
+
+            <div className="dw-production__bench">
+              <div className="dw-production__deck" aria-hidden>
+                <span className="dw-production__spray dw-production__spray--one" />
+                <span className="dw-production__spray dw-production__spray--two" />
+                <span className="dw-production__brand">α</span>
+              </div>
+              <div className="dw-production__labels" aria-hidden>
+                <span>{t('productionDeckSide')}</span>
+                <span>{t('productionBrandSide')}</span>
+              </div>
+            </div>
+
+            <div className="dw-production__steps">
+              {productionStepKeys.map((key, index) => (
+                <span
+                  key={key}
+                  className={index < activeProductionStep ? 'is-done' : index === activeProductionStep ? 'is-active' : ''}
+                >
+                  {t(key)}
+                </span>
+              ))}
+            </div>
+
+            <div className="dw-production__meter">
+              <span style={{ width: `${productionProgress(game)}%` }} />
+            </div>
+
+            <div className="dw-production__ticket">
+              <span>{t('productionTicket')}</span>
+              <strong>{t(productionNoteKey(game.elapsedMs) as any)}</strong>
+              <em>{t('productionElapsed', { n: Math.floor(game.elapsedMs / 1000) })}</em>
+            </div>
+          </section>
+        )}
 
         {game.selected && (
           <div className="dw-modal" role="dialog" aria-modal="true" onClick={() => game.setSelected(null)}>
@@ -162,7 +237,7 @@ export default function DeckWall() {
                 role="button"
                 aria-label={t('backToWall')}
               >
-                <div className="dw-modal__deck dw-modal__deck--front dw-modal__deck--brand" style={deckStyle(game.selected, 0)}>
+                <div className={`dw-modal__deck dw-modal__deck--front dw-modal__deck--brand dw-modal__deck--brand-${wheelVariantFor(game.selected)}`} style={deckStyle(game.selected, 0)}>
                   <span className="dw-modal__brand-art" />
                 </div>
                 <div className="dw-modal__deck dw-modal__deck--back" style={deckStyle(game.selected, 0)}>

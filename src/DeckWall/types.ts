@@ -3,6 +3,7 @@ export const FIELD_H = 680;
 
 export type DeckMode = 'avatar' | 'basic';
 export type DeckStatus = 'idle' | 'generating' | 'complete' | 'failed';
+export type DeckVariant = 'charcoal' | 'cream' | 'mint';
 
 export interface DeckEntry {
   id: string;
@@ -13,6 +14,7 @@ export interface DeckEntry {
   prompt: string;
   backPrompt?: string;
   hasAvatar: boolean;
+  wheelVariant?: DeckVariant;
   userId: string;
   userName?: string;
   userAvatarUrl?: string;
