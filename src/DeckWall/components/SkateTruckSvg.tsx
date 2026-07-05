@@ -34,17 +34,18 @@ function TruckAssembly({ y, variant, prefix }: { y: number; variant: WheelVarian
   const isLightWheel = variant !== 'charcoal';
   return (
     <g>
-      <ellipse cx="21" cy={y + 25} rx="18" ry="7" fill="#000" opacity="0.22" />
-      <ellipse cx="129" cy={y + 25} rx="18" ry="7" fill="#000" opacity="0.22" />
+      <ellipse cx="21" cy={y + 22} rx="16" ry="6" fill="#000" opacity="0.2" />
+      <ellipse cx="129" cy={y + 22} rx="16" ry="6" fill="#000" opacity="0.2" />
       <ellipse cx="75" cy={y + 25} rx="40" ry="8" fill="#000" opacity="0.17" />
 
-      <rect x="9" y={y - 17} width="24" height="34" rx="6.5" fill={`url(#${prefix}-wheel)`} stroke={isLightWheel ? 'rgba(16,16,20,0.2)' : 'rgba(243,239,226,0.14)'} strokeWidth="1" />
-      <rect x="117" y={y - 17} width="24" height="34" rx="6.5" fill={`url(#${prefix}-wheel)`} stroke={isLightWheel ? 'rgba(16,16,20,0.2)' : 'rgba(243,239,226,0.14)'} strokeWidth="1" />
-      <path d={`M30 ${y - 12}v24M120 ${y - 12}v24`} stroke={isLightWheel ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)'} strokeWidth="1.5" />
-      <path d={`M13 ${y - 11}c4 -2 10 -3 16 -2M121 ${y - 13}c5 -1.5 11 -1 16 2`} stroke={color.light} strokeOpacity="0.32" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="11" y={y - 14} width="20" height="28" rx="5.5" fill={`url(#${prefix}-wheel)`} stroke={isLightWheel ? 'rgba(16,16,20,0.2)' : 'rgba(243,239,226,0.14)'} strokeWidth="1" />
+      <rect x="119" y={y - 14} width="20" height="28" rx="5.5" fill={`url(#${prefix}-wheel)`} stroke={isLightWheel ? 'rgba(16,16,20,0.2)' : 'rgba(243,239,226,0.14)'} strokeWidth="1" />
+      <path d={`M28 ${y - 9}v18M122 ${y - 9}v18`} stroke={isLightWheel ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.08)'} strokeWidth="1.4" />
+      <path d={`M15 ${y - 9}c4 -2 9 -2.6 14 -1.6M122 ${y - 10.5}c4.6 -1.2 9.6 -0.7 13.6 1.5`} stroke={color.light} strokeOpacity="0.32" strokeWidth="1.4" strokeLinecap="round" />
+      <path d={`M15 ${y - 5}h12M15 ${y}h12M15 ${y + 5}h12M123 ${y - 5}h12M123 ${y}h12M123 ${y + 5}h12`} stroke={variant === 'charcoal' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.1)'} strokeWidth="1" strokeLinecap="round" />
 
-      <path d={`M29 ${y}H121`} stroke="#050506" strokeWidth="10" strokeLinecap="round" />
-      <path d={`M32 ${y - 2}H118`} stroke={color.truck} strokeWidth="7" strokeLinecap="round" />
+      <path d={`M29 ${y}H121`} stroke="#050506" strokeWidth="9" strokeLinecap="round" />
+      <path d={`M32 ${y - 2}H118`} stroke={color.truck} strokeWidth="6.5" strokeLinecap="round" />
       <path d={`M36 ${y - 4.5}H114`} stroke={color.metal} strokeOpacity={variant === 'cream' ? 0.72 : 0.22} strokeWidth="1.5" strokeLinecap="round" />
 
       <path d={`M57 ${y + 6}c6 11 30 11 36 0l-6 19H63z`} fill="#08080a" opacity="0.72" />
@@ -76,7 +77,7 @@ export function SkateTruckSvg({
   const color = WHEEL[variant];
   const prefix = `truck-${rawId}-${variant}`;
   return (
-    <svg className={className} viewBox="0 0 150 350" aria-hidden="true">
+    <svg className={className} viewBox="0 0 150 410" aria-hidden="true">
       <defs>
         <linearGradient id={`${prefix}-wheel`} x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" stopColor={color.light} />
@@ -96,8 +97,8 @@ export function SkateTruckSvg({
           <stop offset="1" stopColor="#070708" />
         </radialGradient>
       </defs>
-      <TruckAssembly y={68} variant={variant} prefix={prefix} />
-      <TruckAssembly y={282} variant={variant} prefix={prefix} />
+      <TruckAssembly y={78} variant={variant} prefix={prefix} />
+      <TruckAssembly y={332} variant={variant} prefix={prefix} />
     </svg>
   );
 }

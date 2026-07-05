@@ -22,7 +22,7 @@ function wheelVariantFor(entry: WallEntry): WheelVariant {
 function deckStyle(entry: WallEntry, index: number): CSSProperties {
   const row = Math.floor(index / 3);
   const col = index % 3;
-  const xPattern = row % 2 === 0 ? [-8, 4, -2] : [8, -4, 6];
+  const rowShift = row % 2 === 0 ? 0 : 38;
   const imageUrl = entry.imageUrl.startsWith('http')
     ? entry.imageUrl
     : new URL(entry.imageUrl, document.baseURI).href;
@@ -30,9 +30,9 @@ function deckStyle(entry: WallEntry, index: number): CSSProperties {
     ? (entry.backImageUrl || REVIEW_BACK_IMAGE)
     : new URL(entry.backImageUrl || REVIEW_BACK_IMAGE, document.baseURI).href;
   return {
-    '--x': `${xPattern[col]}px`,
+    '--x': `${rowShift}px`,
     '--y': '0px',
-    '--z': `${20 + row * 10 + col}`,
+    '--z': `${20 + row * 12 + col}`,
     '--deck-img': `url(${imageUrl})`,
     '--deck-back-img': `url(${backUrl})`,
   } as CSSProperties;
@@ -152,42 +152,60 @@ export default function DeckWall() {
         {game.selected && (
           <div className="dw-modal" role="dialog" aria-modal="true" onClick={() => game.setSelected(null)}>
             <div className="dw-modal__body" onClick={ev => ev.stopPropagation()}>
-              <div className="dw-modal__boards">
+              <button type="button" className="dw-modal__close" onClick={() => game.setSelected(null)} aria-label={t('backToWall')}>
+                <span aria-hidden>←</span>
+                {t('backToWall')}
+              </button>
+              <div
+                className="dw-modal__boards"
+                onClick={() => game.setSelected(null)}
+                role="button"
+                aria-label={t('backToWall')}
+              >
                 <div className="dw-modal__deck dw-modal__deck--front dw-modal__deck--brand" style={deckStyle(game.selected, 0)}>
-                  <span className="dw-modal__label">Front</span>
                   <span className="dw-modal__brand-art" />
                 </div>
                 <div className="dw-modal__deck dw-modal__deck--back" style={deckStyle(game.selected, 0)}>
-                  <span className="dw-modal__label">Back</span>
                   <span className="dw-modal__back-art" />
                   <SkateTruckSvg className="dw-modal__back-svg" variant={wheelVariantFor(game.selected)} />
                 </div>
               </div>
-              <div className="dw-modal__copy">
-                <div className="dw-modal__meta">
-                  <span>{game.selected.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</span>
-                  <h2>{game.selected.isSelf ? t('complete') : game.selected.userName || 'Deck'}</h2>
-                  {game.selected.isSelf ? (
-                    <strong className="dw-modal__self">{t('self')}</strong>
-                  ) : (
-                    <button
-                      type="button"
-                      className="dw-modal__author"
-                      onClick={() => game.openAuthor(game.selected!)}
-                      disabled={!game.isInAigram}
-                    >
-                      <span className="dw-author__avatar">
-                        {game.selected.userAvatarUrl ? (
-                          <img src={game.selected.userAvatarUrl} alt="" draggable={false} />
-                        ) : (
-                          <span>{authorInitial(game.selected.userName)}</span>
-                        )}
-                      </span>
-                      <span>{game.selected.userName || 'rider'}</span>
-                    </button>
-                  )}
-                </div>
-                <button type="button" onClick={() => game.setSelected(null)}>Close</button>
+              <div className="dw-modal__identity">
+                {game.selected.isSelf ? (
+                  <div className="dw-modal__author-card dw-modal__author-card--self">
+                    <span className="dw-modal__avatar" aria-hidden>
+                      {game.selected.userAvatarUrl ? (
+                        <img src={game.selected.userAvatarUrl} alt="" draggable={false} />
+                      ) : (
+                        <span>{authorInitial(game.selected.userName || t('self'))}</span>
+                      )}
+                    </span>
+                    <span className="dw-modal__name">
+                      <small>{game.selected.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
+                      <strong>{game.selected.userName || t('self')}</strong>
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="dw-modal__author-card"
+                    onClick={() => game.openAuthor(game.selected!)}
+                    disabled={!game.isInAigram}
+                    aria-label={t('openProfile', { n: game.selected.userName || 'rider' })}
+                  >
+                    <span className="dw-modal__avatar" aria-hidden>
+                      {game.selected.userAvatarUrl ? (
+                        <img src={game.selected.userAvatarUrl} alt="" draggable={false} />
+                      ) : (
+                        <span>{authorInitial(game.selected.userName)}</span>
+                      )}
+                    </span>
+                    <span className="dw-modal__name">
+                      <small>{game.selected.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
+                      <strong>{game.selected.userName || 'rider'}</strong>
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

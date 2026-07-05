@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
-import { REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type WallEntry } from './types';
+import { REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, REVIEW_GENERATED_DECK_IMAGE, type WallEntry } from './types';
 import './ReviewPage.less';
 
 const names = ['Maya', 'Jun', 'Rae', 'Noor', 'Ari', 'Lux', 'Theo', 'Iris', 'Sol', 'Nia', 'Bo', 'Kai'];
@@ -19,15 +19,14 @@ function mockDeck(index: number, hasAvatar = index % 3 !== 1): WallEntry {
   };
 }
 
-function boardStyle(index: number) {
+function boardStyle(index: number, imageUrl = REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length]) {
   const row = Math.floor(index / 3);
   const col = index % 3;
-  const xPattern = row % 2 === 0 ? [-6, 4, -2] : [7, -4, 5];
   return {
-    '--x': `${xPattern[col]}px`,
+    '--x': `${row % 2 === 0 ? 0 : 30}px`,
     '--y': '0px',
-    '--z': `${20 + row * 10 + col}`,
-    '--deck-img': `url(${new URL(REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length], document.baseURI).href})`,
+    '--z': `${20 + row * 12 + col}`,
+    '--deck-img': `url(${new URL(imageUrl, document.baseURI).href})`,
     '--deck-back-img': `url(${new URL(REVIEW_BACK_IMAGE, document.baseURI).href})`,
   } as CSSProperties;
 }
@@ -41,14 +40,16 @@ function MiniDeck({
   large = false,
   side = 'wall',
   wheelVariant = wheelVariantForIndex(index),
+  imageUrl,
 }: {
   index: number;
   large?: boolean;
   side?: 'wall' | 'front' | 'back';
   wheelVariant?: WheelVariant;
+  imageUrl?: string;
 }) {
   return (
-    <span className={`dwr-deck dwr-deck--${side} ${large ? 'dwr-deck--large' : ''}`} style={boardStyle(index)}>
+    <span className={`dwr-deck dwr-deck--${side} ${large ? 'dwr-deck--large' : ''}`} style={boardStyle(index, imageUrl)}>
       <span />
       {side === 'back' && <SkateTruckSvg className="dwr-trucks" variant={wheelVariant} />}
     </span>
@@ -172,6 +173,43 @@ export default function ReviewPage() {
           <figure>
             <MiniDeck index={0} side="back" large wheelVariant="cream" />
             <figcaption>BACK / AVATAR STYLE</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section className="dwr-wheel-scale-review">
+        <header>
+          <span className="dwr-kicker">Wheel scale review</span>
+          <h2>按参考图重调后的轮子比例</h2>
+          <p>这里展示的是详情页同一套 SVG 硬件，方便直接评审轮子大小、外扩距离和轮架位置。</p>
+        </header>
+        <div className="dwr-wheel-scale-review__boards">
+          {(['charcoal', 'cream', 'mint'] as WheelVariant[]).map((variant, index) => (
+            <figure key={variant}>
+              <MiniDeck index={index + 6} side="back" large wheelVariant={variant} />
+              <figcaption>{variant === 'charcoal' ? 'BLACK WHEEL' : variant === 'cream' ? 'CREAM WHEEL' : 'MINT WHEEL'}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      <section className="dwr-generated-review">
+        <header>
+          <span className="dwr-kicker">Generated artwork sample</span>
+          <h2>新生成图案：先铺满，再套板形。</h2>
+          <p>
+            左侧是这次模拟生成的原始矩形图，不包含滑板外框、轮子、墙面背景或黑边；
+            右侧是同一张图进入背面遮罩后的最终观感，用来确认裁切不会吃掉主体。
+          </p>
+        </header>
+        <div className="dwr-generated-review__body">
+          <figure className="dwr-generated-review__raw">
+            <img src={REVIEW_GENERATED_DECK_IMAGE} alt="Generated full-bleed skateboard artwork sample" draggable={false} />
+            <figcaption>RAW GENERATED IMAGE / NO BOARD OUTLINE</figcaption>
+          </figure>
+          <figure className="dwr-generated-review__deck">
+            <MiniDeck index={11} side="back" large wheelVariant="mint" imageUrl={REVIEW_GENERATED_DECK_IMAGE} />
+            <figcaption>MASKED BACK / FINAL DETAIL STYLE</figcaption>
           </figure>
         </div>
       </section>

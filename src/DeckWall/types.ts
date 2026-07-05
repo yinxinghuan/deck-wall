@@ -47,4 +47,5 @@ export const REVIEW_DECK_IMAGES = Array.from(
   { length: 12 },
   (_, index) => `./img/review-decks/deck-${String(index).padStart(2, '0')}.jpg`,
 );
+export const REVIEW_GENERATED_DECK_IMAGE = './img/review-decks/generated-preview-00.png';
 export const REVIEW_BACK_IMAGE = './img/review-back.svg';
