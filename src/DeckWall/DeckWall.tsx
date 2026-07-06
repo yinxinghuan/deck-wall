@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type DeckVariant, type WallEntry } from './types';
 import { useDeckWall } from './hooks/useDeckWall';
 import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
@@ -34,6 +34,11 @@ function productionProgress(game: ReturnType<typeof useDeckWall>) {
   if (step === 1) return Math.min(36 + ((sec - 35) / 85) * 22, 58);
   if (step === 2) return Math.min(68 + Math.sin(sec * 0.9) * 3, 74);
   return 92;
+}
+
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 }
 
 function productionCopyKey(game: ReturnType<typeof useDeckWall>, hasAvatar: boolean) {
@@ -107,11 +112,14 @@ function CommentAvatar({ message }: { message: GuestMessage }) {
 function DetailSocial({
   game,
   entry,
+  onInputFocusChange,
 }: {
   game: ReturnType<typeof useDeckWall>;
   entry: WallEntry;
+  onInputFocusChange: (focused: boolean) => void;
 }) {
   const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const comments = game.commentsFor(entry);
   const likes = game.likesFor(entry);
   const liked = game.hasLiked(entry);
@@ -123,6 +131,17 @@ function DetailSocial({
   function submitComment(ev: FormEvent) {
     ev.preventDefault();
     if (game.sendComment(entry, draft)) setDraft('');
+  }
+
+  function focusComposer() {
+    onInputFocusChange(true);
+    window.setTimeout(() => {
+      inputRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    }, 80);
+  }
+
+  function blurComposer() {
+    window.setTimeout(() => onInputFocusChange(false), 120);
   }
 
   const latestComments = comments.slice(-3).reverse();
@@ -218,8 +237,11 @@ function DetailSocial({
 
       <form className="dw-comment-form" onSubmit={submitComment}>
         <input
+          ref={inputRef}
           value={draft}
           onChange={ev => setDraft(ev.target.value)}
+          onFocus={focusComposer}
+          onBlur={blurComposer}
           maxLength={140}
           placeholder={t('commentPlaceholder')}
         />
@@ -234,9 +256,12 @@ export default function DeckWall() {
   const hasAvatar = !!game.profile?.head_url;
   const activeProductionStep = productionStep(game);
   const productionVariant = (['charcoal', 'cream', 'mint'] as DeckVariant[])[activeProductionStep % 3];
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [commentFocused, setCommentFocused] = useState(false);
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
+      if (isTypingTarget(ev.target)) return;
       if (ev.key === 'Escape') {
         game.setSelected(null);
         return;
@@ -248,6 +273,31 @@ export default function DeckWall() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+
+  useEffect(() => {
+    const updateKeyboardInset = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        setKeyboardInset(0);
+        return;
+      }
+      const rawInset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset(rawInset > 40 ? Math.min(300, Math.ceil(rawInset / Math.max(game.scale, 0.1))) : 0);
+    };
+    updateKeyboardInset();
+    window.visualViewport?.addEventListener('resize', updateKeyboardInset);
+    window.visualViewport?.addEventListener('scroll', updateKeyboardInset);
+    window.addEventListener('resize', updateKeyboardInset);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateKeyboardInset);
+      window.visualViewport?.removeEventListener('scroll', updateKeyboardInset);
+      window.removeEventListener('resize', updateKeyboardInset);
+    };
+  }, [game.scale]);
+
+  useEffect(() => {
+    if (!game.selected) setCommentFocused(false);
+  }, [game.selected]);
 
   async function handleGenerate() {
     if (game.generating || !game.profileLoaded || !game.canCraft) return;
@@ -275,7 +325,8 @@ export default function DeckWall() {
           width: FIELD_W,
           height: FIELD_H,
           transform: `scale(${game.scale})`,
-        }}
+          '--dw-keyboard-inset': `${keyboardInset}px`,
+        } as CSSProperties}
       >
         <header className="dw-header">
           <div>
@@ -378,7 +429,12 @@ export default function DeckWall() {
         )}
 
         {game.selected && (
-          <div className="dw-modal" role="dialog" aria-modal="true" onClick={() => game.setSelected(null)}>
+          <div
+            className={`dw-modal ${keyboardInset > 0 || commentFocused ? 'dw-modal--keyboard' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            onClick={() => game.setSelected(null)}
+          >
             <div className="dw-modal__body" onClick={ev => ev.stopPropagation()}>
               <button type="button" className="dw-modal__close" onClick={() => game.setSelected(null)} aria-label={t('backToWall')}>
                 <span aria-hidden>←</span>
@@ -398,7 +454,7 @@ export default function DeckWall() {
                   <SkateTruckSvg className="dw-modal__back-svg" variant={wheelVariantFor(game.selected)} />
                 </div>
               </div>
-              <DetailSocial game={game} entry={game.selected} />
+              <DetailSocial game={game} entry={game.selected} onInputFocusChange={setCommentFocused} />
             </div>
           </div>
         )}

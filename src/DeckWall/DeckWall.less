@@ -696,6 +696,13 @@
   overflow: hidden;
 }
 
+.dw-modal--keyboard .dw-modal__body {
+  grid-template-rows: 36px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding-top: 12px;
+  padding-bottom: calc(10px + var(--dw-keyboard-inset, 0px));
+}
+
 .dw-modal__body::before,
 .dw-modal__body::after {
   content: '';
@@ -768,6 +775,13 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   z-index: 1;
+}
+
+.dw-modal--keyboard .dw-modal__boards {
+  align-items: center;
+  padding-bottom: 0;
+  transform: scale(0.78);
+  transform-origin: center bottom;
 }
 
 .dw-modal__deck {
@@ -923,6 +937,12 @@
   gap: 7px;
   background:
     linear-gradient(90deg, rgba(243,239,226,0.075), transparent 66%);
+}
+
+.dw-modal--keyboard .dw-modal__social {
+  grid-template-rows: auto auto 0 38px;
+  gap: 6px;
+  padding-top: 8px;
 }
 
 .dw-modal__identity {
@@ -1104,6 +1124,13 @@
   overflow: hidden;
 }
 
+.dw-modal--keyboard .dw-comments {
+  min-height: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .dw-comment {
   min-width: 0;
   display: grid;
@@ -1213,6 +1240,12 @@
     background: rgba(243,239,226,0.07);
     color: @cream;
     outline: none;
+  }
+
+  input:focus {
+    border-color: rgba(35,214,255,0.5);
+    background: rgba(243,239,226,0.12);
+    box-shadow: 0 0 0 3px rgba(35,214,255,0.12);
   }
 
   input::placeholder {

@@ -39,11 +39,57 @@ function nameGraphicLine(userName?: string) {
   ].join(' ');
 }
 
-function avatarPromptFor(userName?: string) {
+function creativeBriefFor(seed: string) {
+  const score = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const directions = [
+    'masked rider stencil with torn wheat-paste layers and aggressive eye-shape abstraction',
+    'punk sticker-bomb collage with fragmented face geometry, safety-label fragments, and marker scrawls',
+    'photocopy zine portrait energy with hard halftone, scratched ink, and warped typography',
+    'night-market spray tag composition with neon overspray, chipped paint, and vertical symbol stack',
+    'garage-band poster texture with cropped eyes, sharp stencil shadows, and registration misprint color fields',
+    'old skate-shop counter sticker sheet with peeled corners, barcode scraps, and rough screenprint blocks',
+  ];
+  const compositions = [
+    'central vertical mask, large negative-space band across the lower third, small sticker fragments near both rails',
+    'oversized cropped face fragment in the upper half, diagonal tape tear through the center, dense marks near the tail',
+    'big abstract icon in the middle, repeated initials as background texture, high-contrast tag near the nose',
+    'split-column layout: one bold silhouette stripe, one noisy collage stripe, and a centered focal mark',
+    'poster-like title block pushed through the center, with the strongest detail between 38% and 62% of image height',
+    'asymmetric vertical stack, heavy dark shape on one side, bright scuffed highlight on the opposite side',
+  ];
+  const palettes = [
+    'hot pink, dirty cream, black carbon, and cyan registration accents',
+    'acid green, smoke black, off-white paper, and one electric blue scrape',
+    'faded red, photocopy gray, tar black, and yellow warning-label accents',
+    'mint aqua, deep purple-black, bone white, and magenta spray dust',
+    'sun-bleached orange, asphalt black, pale teal, and cream sticker paper',
+    'cobalt blue, chalk white, charcoal, and small neon lime marks',
+  ];
+  const materials = [
+    'spray paint bloom, torn stickers, knife scratches, paper glue, and halftone dots',
+    'screenprint overprint, photocopy grain, rubbed wax, chipped enamel, and tape residue',
+    'paint marker strokes, scuffed varnish, stencil overspray, old label adhesive, and dust',
+    'wet ink drag, cracked paper, thumb-smudged toner, sticker edges, and scraped deck-shop texture',
+    'rough risograph noise, misregistered color plates, black marker cuts, and peeled paper fibers',
+    'sun-faded paste-up texture, grit, staple holes, printer streaks, and layered sticker ghosts',
+  ];
+  const pick = <T,>(items: T[], offset: number) => items[(score + offset) % items.length];
+  return [
+    `Creative variation seed: ${seed}.`,
+    `Direction: ${pick(directions, 0)}.`,
+    `Composition: ${pick(compositions, 2)}.`,
+    `Palette: ${pick(palettes, 4)}.`,
+    `Material language: ${pick(materials, 6)}.`,
+    'Make this generation clearly distinct from other decks by changing the main silhouette, composition, color balance, and typography placement.',
+  ].join(' ');
+}
+
+function avatarPromptFor(userName?: string, seed = 'avatar-default') {
   return [
   'Full-bleed vertical rectangular street art graphic intended to be clipped by the app into a skateboard later, using the reference avatar only as raw identity inspiration.',
   'Extract broad traits only: face silhouette, hairstyle direction, expression energy, color temperature, accessory hints, and attitude.',
   'Reinvent those traits as an original underground skate poster character, stencil mask, torn sticker collage, halftone photocopy texture, spray paint overspray, scratches, tape residue, and screenprint registration errors.',
+  creativeBriefFor(seed),
   nameGraphicLine(userName),
   'The final artwork should feel like a second-generation graphic interpretation of the person, not a pasted avatar and not a literal photo portrait.',
   'Artwork fills the entire rectangular image edge to edge, with the strongest visual mass centered in the middle vertical strip.',
@@ -52,9 +98,10 @@ function avatarPromptFor(userName?: string) {
   ].join(' ');
 }
 
-function basicPromptFor(userName?: string) {
+function basicPromptFor(userName?: string, seed = 'basic-default') {
   return [
   'Full-bleed vertical rectangular street art texture intended to be clipped by the app into a skateboard later, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
+  creativeBriefFor(seed),
   nameGraphicLine(userName),
   'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered in the middle vertical strip, underground skate shop wall aesthetic,',
   'do not include any pre-cut outer shape, object silhouette, border, frame, surrounding wall background, black side margins, wheels, trucks, portrait, or readable brand logos',
@@ -70,7 +117,26 @@ function variantForSeed(seed: string): DeckVariant {
   return variants[score % variants.length];
 }
 
-function buildBackPrompt(variant: DeckVariant = 'charcoal') {
+function brandBriefFor(seed: string) {
+  const score = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const layouts = [
+    'logo mark sits slightly above center with a wide quiet field below',
+    'logo mark is centered but ghosted behind a subtle vertical varnish streak',
+    'logo mark is smaller and lower, with sparse scuffs near the nose',
+    'logo mark is offset by a few percent with a faint diagonal screenprint shadow',
+    'logo mark appears as a restrained ink stamp under a translucent worn clear coat',
+  ];
+  const accents = [
+    'one tiny registration dot near the upper truck zone',
+    'two hairline scratches crossing the lower third',
+    'a subtle edge glow along one rail',
+    'faint halftone fading toward the tail',
+    'a small worn-paper scuff near the centerline',
+  ];
+  return `${layouts[score % layouts.length]}; ${accents[(score + 3) % accents.length]}.`;
+}
+
+function buildBackPrompt(variant: DeckVariant = 'charcoal', seed = 'brand-default') {
   const palette = {
     charcoal: 'matte black field, dirty cream platform logo mark, one tiny hot pink registration accent, black hardware family',
     cream: 'warm cream field, black platform logo mark, soft silver scuffs, black micro accents, cream wheel family',
@@ -80,6 +146,7 @@ function buildBackPrompt(variant: DeckVariant = 'charcoal') {
     'Full-bleed vertical rectangular brand-side graphic, created from the reference AlterU platform logo image.',
     'Use the reference logo shape as the central hero mark, but deliberately smaller and more premium: it should occupy about 28 percent of the image height, not fill the whole artwork.',
     `Palette version: ${palette}.`,
+    `Brand-side layout variation: ${brandBriefFor(seed)}`,
     'Simpler and more restrained than the color artwork: generous negative space, subtle halftone grain, sparse scratches, premium skate brand identity.',
     'Artwork fills the entire rectangular image edge to edge, strongest logo composition centered in the middle vertical strip.',
     'Do not include any pre-cut outer shape, object silhouette, rounded border, frame, inner rim, edge stroke, surrounding wall background, or black side margins.',
@@ -127,7 +194,7 @@ function demoDeck(index: number): DeckEntry {
     imageUrl: REVIEW_DECK_IMAGES[index % REVIEW_DECK_IMAGES.length],
     backImageUrl: REVIEW_BACK_IMAGE,
     prompt: index % 3 === 0 ? basicPrompt : avatarPrompt,
-    backPrompt: buildBackPrompt(variantForSeed(`demo-${index}`)),
+    backPrompt: buildBackPrompt(variantForSeed(`demo-${index}`), `demo-${index}-brand`),
     hasAvatar: index % 3 !== 0,
     wheelVariant: variantForSeed(`demo-${index}`),
     userId: `demo-${index}`,
@@ -457,10 +524,11 @@ export function useDeckWall() {
     setElapsedMs(0);
     setGenerationPhase('art');
     setError('');
-    const hasAvatar = !!profile?.head_url;
-    const prompt = hasAvatar ? avatarPromptFor(profile?.name) : basicPromptFor(profile?.name);
     const draftId = makeId();
     const draftCreatedAt = Date.now();
+    const seed = `${draftId}-${draftCreatedAt}`;
+    const hasAvatar = !!profile?.head_url;
+    const prompt = hasAvatar ? avatarPromptFor(profile?.name, seed) : basicPromptFor(profile?.name, seed);
     const wheelVariant = variantForSeed(`${draftId}-${draftCreatedAt}`);
     try {
       const imageUrl = await gen.generate({
@@ -468,7 +536,7 @@ export function useDeckWall() {
         ...(hasAvatar ? { ref_url: profile!.head_url! } : {}),
       });
       setGenerationPhase('brand');
-      const backPrompt = buildBackPrompt(wheelVariant);
+      const backPrompt = buildBackPrompt(wheelVariant, `${seed}-brand`);
       const backImageUrl = await gen.generate({
         prompt: backPrompt,
         ref_url: ALPHA_REF_URL,
