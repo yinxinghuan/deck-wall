@@ -469,7 +469,7 @@
     linear-gradient(180deg, rgba(17,17,22,0.98), rgba(5,5,7,0.99));
   color: @cream;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 16px;
   animation: dw-production-in 220ms ease-out;
 }
@@ -488,9 +488,8 @@
 
 .dw-production__top,
 .dw-production__bench,
-.dw-production__steps,
-.dw-production__meter,
-.dw-production__ticket {
+.dw-production__cue,
+.dw-production__meter {
   position: relative;
   z-index: 1;
 }
@@ -609,38 +608,6 @@
   text-transform: uppercase;
 }
 
-.dw-production__steps {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-
-  span {
-    min-width: 0;
-    border: 1px solid rgba(243,239,226,0.14);
-    border-radius: 12px;
-    padding: 8px 4px;
-    color: rgba(243,239,226,0.44);
-    background: rgba(243,239,226,0.045);
-    font-size: 8px;
-    font-weight: 1000;
-    line-height: 1.1;
-    text-align: center;
-    text-transform: uppercase;
-  }
-
-  .is-done {
-    color: rgba(243,239,226,0.72);
-    border-color: rgba(243,239,226,0.22);
-  }
-
-  .is-active {
-    color: @ink;
-    border-color: transparent;
-    background: @cream;
-    box-shadow: 0 10px 26px rgba(243,239,226,0.16);
-  }
-}
-
 .dw-production__meter {
   height: 6px;
   overflow: hidden;
@@ -656,14 +623,14 @@
   }
 }
 
-.dw-production__ticket {
+.dw-production__cue {
   border: 1px solid rgba(243,239,226,0.16);
   border-radius: 18px;
-  padding: 13px 14px;
+  padding: 14px 15px 13px;
   background: rgba(8,8,10,0.62);
   backdrop-filter: blur(16px);
   display: grid;
-  gap: 5px;
+  gap: 9px;
 
   span {
     color: @yellow;
@@ -678,12 +645,26 @@
     font-size: 12px;
     line-height: 1.28;
   }
+}
 
-  em {
-    color: rgba(243,239,226,0.44);
-    font-size: 9px;
-    font-style: normal;
-    font-weight: 800;
+.dw-production__dots {
+  display: flex;
+  gap: 7px;
+
+  i {
+    width: 22px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(243,239,226,0.14);
+  }
+
+  .is-done {
+    background: rgba(243,239,226,0.42);
+  }
+
+  .is-active {
+    background: linear-gradient(90deg, @pink, @yellow, @blue);
+    box-shadow: 0 0 18px rgba(255,79,139,0.22);
   }
 }
 

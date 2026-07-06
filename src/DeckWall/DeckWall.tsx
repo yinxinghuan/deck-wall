@@ -358,25 +358,21 @@ export default function DeckWall() {
               </div>
             </div>
 
-            <div className="dw-production__steps">
-              {productionStepKeys.map((key, index) => (
-                <span
-                  key={key}
-                  className={index < activeProductionStep ? 'is-done' : index === activeProductionStep ? 'is-active' : ''}
-                >
-                  {t(key)}
-                </span>
-              ))}
+            <div className="dw-production__cue">
+              <span>{t(productionStepKeys[activeProductionStep])}</span>
+              <strong>{t(productionNoteKey(game.elapsedMs) as any)}</strong>
+              <div className="dw-production__dots" aria-hidden>
+                {productionStepKeys.map((key, index) => (
+                  <i
+                    key={key}
+                    className={index < activeProductionStep ? 'is-done' : index === activeProductionStep ? 'is-active' : ''}
+                  />
+                ))}
+              </div>
             </div>
 
             <div className="dw-production__meter">
               <span style={{ width: `${productionProgress(game)}%` }} />
-            </div>
-
-            <div className="dw-production__ticket">
-              <span>{t('productionTicket')}</span>
-              <strong>{t(productionNoteKey(game.elapsedMs) as any)}</strong>
-              <em>{t('productionElapsed', { n: Math.floor(game.elapsedMs / 1000) })}</em>
             </div>
           </section>
         )}

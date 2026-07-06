@@ -92,6 +92,33 @@ function makeId() {
   return `deck-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function absoluteImageUrl(url: string) {
+  return url.startsWith('http') ? url : new URL(url, document.baseURI).href;
+}
+
+function preloadImage(url: string): Promise<void> {
+  return new Promise(resolve => {
+    const image = new Image();
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, 16000);
+    image.onload = () => {
+      if ('decode' in image) {
+        image.decode().then(finish).catch(finish);
+      } else {
+        finish();
+      }
+    };
+    image.onerror = finish;
+    image.src = absoluteImageUrl(url);
+  });
+}
+
 function demoDeck(index: number): DeckEntry {
   return {
     id: `demo-deck-${index}`,
@@ -442,6 +469,10 @@ export function useDeckWall() {
         userName: profile?.name,
         userAvatarUrl: profile?.head_url,
       };
+      await Promise.all([
+        preloadImage(deck.imageUrl),
+        preloadImage(deck.backImageUrl || REVIEW_BACK_IMAGE),
+      ]);
       const next: DeckSave = {
         ...mirror,
         decks: [deck, ...mirror.decks].slice(0, MAX_MINE),
