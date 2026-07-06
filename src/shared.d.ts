@@ -26,6 +26,11 @@ declare module '@shared/runtime' {
     lastUrl: string | null;
   }
   export function useGenImage(): UseGenImage;
+  export interface UseGameEvent {
+    trigger: (event: string, configJson?: object | string) => void;
+    canEmit: boolean;
+  }
+  export function useGameEvent(): UseGameEvent;
 }
 
 declare module '@shared/save' {

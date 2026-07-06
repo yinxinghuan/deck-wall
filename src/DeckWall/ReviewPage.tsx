@@ -23,7 +23,7 @@ function boardStyle(index: number, imageUrl = REVIEW_DECK_IMAGES[index % REVIEW_
   const row = Math.floor(index / 3);
   const col = index % 3;
   return {
-    '--x': `${row % 2 === 0 ? 0 : 30}px`,
+    '--x': `${row % 2 === 0 ? 0 : 27}px`,
     '--y': '0px',
     '--z': `${20 + row * 12 + col}`,
     '--deck-img': `url(${new URL(imageUrl, document.baseURI).href})`,

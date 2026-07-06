@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   callAigramAPI,
   isInAigram,
@@ -6,31 +6,63 @@ import {
   telegramId,
   type AigramResponse,
 } from '@shared/runtime';
-import { useGenImage } from '@shared/runtime';
+import { useGameEvent, useGenImage } from '@shared/runtime';
 import { useGameSave } from '@shared/save';
-import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type DeckEntry, type DeckSave, type DeckVariant, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
+import {
+  appendMessage,
+  guestbookNotifyConfig,
+  messagesByTarget,
+  newId,
+  newMessage,
+  threadFor,
+  type GuestMessage,
+} from '../../shared/social/guestbook';
+import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, REVIEW_DECK_IMAGES, type DeckEntry, type DeckLike, type DeckSave, type DeckVariant, type ProfileInfo, type SaveRow, type WallEntry } from '../types';
 
 const MAX_MINE = 12;
 const MAX_WALL = 24;
+const MAX_LIKES_STORED = 80;
+const CRAFT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
 const DEFAULT_SAVE: DeckSave = { decks: [], totalGenerated: 0 };
 const ALPHA_REF_URL = 'https://images.aiwaves.tech/bag-watermark/alteru_white_1024.png';
 
-const avatarPrompt = [
+function nameGraphicLine(userName?: string) {
+  const clean = (userName || '').replace(/[{}<>"'`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 24);
+  if (!clean) {
+    return 'If no usable rider name is available, do not invent text; use abstract sticker typography instead.';
+  }
+  return [
+    `Optional rider-name material: "${clean}".`,
+    'Treat the name as graphic raw material, not as a plain caption: it may become initials, cropped block letters, vertical type, sideways type, sticker fragments, stencil cuts, or partial decorative typography.',
+    'Keep any name-derived typography near the center vertical zone so the skateboard clipping keeps it visible, but it does not need to be perfectly readable.',
+  ].join(' ');
+}
+
+function avatarPromptFor(userName?: string) {
+  return [
   'Full-bleed vertical rectangular street art graphic intended to be clipped by the app into a skateboard later, using the reference avatar only as raw identity inspiration.',
   'Extract broad traits only: face silhouette, hairstyle direction, expression energy, color temperature, accessory hints, and attitude.',
   'Reinvent those traits as an original underground skate poster character, stencil mask, torn sticker collage, halftone photocopy texture, spray paint overspray, scratches, tape residue, and screenprint registration errors.',
+  nameGraphicLine(userName),
   'The final artwork should feel like a second-generation graphic interpretation of the person, not a pasted avatar and not a literal photo portrait.',
   'Artwork fills the entire rectangular image edge to edge, with the strongest visual mass centered in the middle vertical strip.',
   'Do not preserve the exact face, do not copy the photo composition, do not paste a circular avatar, do not create a photorealistic headshot, do not make a cute caricature.',
   'Do not include any pre-cut outer shape, object silhouette, border, frame, surrounding wall background, black side margins, wheels, trucks, childish styling, or readable brand logos.',
-].join(' ');
+  ].join(' ');
+}
 
-const basicPrompt = [
+function basicPromptFor(userName?: string) {
+  return [
   'Full-bleed vertical rectangular street art texture intended to be clipped by the app into a skateboard later, simple raw two-color street tag, spray paint, sticker scraps, scratches,',
+  nameGraphicLine(userName),
   'the artwork fills the entire rectangular image edge to edge, strongest tag/detail composition centered in the middle vertical strip, underground skate shop wall aesthetic,',
   'do not include any pre-cut outer shape, object silhouette, border, frame, surrounding wall background, black side margins, wheels, trucks, portrait, or readable brand logos',
-].join(' ');
+  ].join(' ');
+}
+
+const avatarPrompt = avatarPromptFor();
+const basicPrompt = basicPromptFor();
 
 function variantForSeed(seed: string): DeckVariant {
   const variants: DeckVariant[] = ['charcoal', 'cream', 'mint'];
@@ -96,13 +128,93 @@ async function fetchProfile(userId: string): Promise<ProfileInfo | null> {
   }
 }
 
+function stampedMessages(
+  grouped: Map<string, GuestMessage[]>,
+  profileMap: Map<string, ProfileInfo | null>,
+): Map<string, GuestMessage[]> {
+  const next = new Map<string, GuestMessage[]>();
+  grouped.forEach((messages, target) => {
+    next.set(target, messages.map(message => {
+      const p = message.fromUserId ? profileMap.get(message.fromUserId) : null;
+      return {
+        ...message,
+        userName: p?.name || message.userName,
+        userAvatarUrl: p?.head_url || message.userAvatarUrl,
+      };
+    }));
+  });
+  return next;
+}
+
+function likesByTarget(rows: SaveRow[]): Map<string, DeckLike[]> {
+  const grouped = new Map<string, DeckLike[]>();
+  for (const row of rows) {
+    if (!row?.user_id || !row.resource_data) continue;
+    let save: DeckSave;
+    try {
+      save = JSON.parse(row.resource_data) as DeckSave;
+    } catch {
+      continue;
+    }
+    for (const like of save.likes || []) {
+      if (!like?.id || !like.target) continue;
+      const stamped: DeckLike = { ...like, fromUserId: row.user_id };
+      const bucket = grouped.get(like.target);
+      if (bucket) bucket.push(stamped);
+      else grouped.set(like.target, [stamped]);
+    }
+  }
+  return grouped;
+}
+
+function stampedLikes(
+  grouped: Map<string, DeckLike[]>,
+  profileMap: Map<string, ProfileInfo | null>,
+): Map<string, DeckLike[]> {
+  const next = new Map<string, DeckLike[]>();
+  grouped.forEach((likes, target) => {
+    next.set(target, likes.map(like => {
+      const p = like.fromUserId ? profileMap.get(like.fromUserId) : null;
+      return {
+        ...like,
+        userName: p?.name || like.userName,
+        userAvatarUrl: p?.head_url || like.userAvatarUrl,
+      };
+    }));
+  });
+  return next;
+}
+
+function uniqueLikesFor(
+  target: string,
+  grouped: Map<string, DeckLike[]>,
+  myLikes: DeckLike[] | undefined,
+  myUserId?: string | null,
+): DeckLike[] {
+  const byUser = new Map<string, DeckLike>();
+  const myKey = myUserId || 'self';
+  const myHasLike = (myLikes || []).some(like => like.target === target);
+  for (const like of grouped.get(target) || []) {
+    if ((like.fromUserId || like.id) === myKey && !myHasLike) continue;
+    byUser.set(like.fromUserId || like.id, like);
+  }
+  for (const like of myLikes || []) {
+    if (like.target !== target) continue;
+    byUser.set(myKey, { ...like, fromUserId: like.fromUserId ?? myKey });
+  }
+  return [...byUser.values()].sort((a, b) => b.ts - a.ts);
+}
+
 export function useDeckWall() {
   const { savedData, persist } = useGameSave<DeckSave>('deck-wall');
+  const { trigger } = useGameEvent();
   const gen = useGenImage();
   const [mirror, setMirror] = useState<DeckSave | undefined>(undefined);
   const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [wall, setWall] = useState<WallEntry[]>([]);
+  const [messageThreads, setMessageThreads] = useState<Map<string, GuestMessage[]>>(new Map());
+  const [likeThreads, setLikeThreads] = useState<Map<string, DeckLike[]>>(new Map());
   const [status, setStatus] = useState<'idle' | 'generating' | 'complete' | 'failed'>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -110,6 +222,8 @@ export function useDeckWall() {
   const [selected, setSelected] = useState<WallEntry | null>(null);
   const [error, setError] = useState('');
   const [scale, setScale] = useState(1);
+  const [nowMs, setNowMs] = useState(Date.now());
+  const notifiedMessages = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (mirror === undefined && savedData !== undefined) {
@@ -146,10 +260,40 @@ export function useDeckWall() {
   }, []);
 
   const mine = mirror?.decks ?? [];
+  const cooldownRemainingMs = Math.max(0, (mirror?.lastGeneratedAt || 0) + CRAFT_COOLDOWN_MS - nowMs);
+  const canCraft = cooldownRemainingMs <= 0;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const refreshWall = useCallback(async () => {
     if (!isInAigram) {
-      setWall(makeDemoWall());
+      const demo = makeDemoWall().map((entry, index) => ({
+        ...entry,
+        likeCount: 6 + index,
+        commentCount: index % 3,
+      }));
+      setWall(demo);
+      setMessageThreads(new Map([
+        ['demo-deck-0', [
+          {
+            id: 'demo-message-0',
+            target: 'demo-deck-0',
+            text: '这块像旧贴纸被撕开以后又重新喷了一层。',
+            ts: Date.now() - 1000 * 60 * 8,
+            fromUserId: 'demo-note-0',
+            userName: 'Noor',
+          },
+        ]],
+      ]));
+      setLikeThreads(new Map([
+        ['demo-deck-0', [
+          { id: 'demo-like-0', target: 'demo-deck-0', ts: Date.now() - 1000 * 60 * 5, fromUserId: 'demo-note-1', userName: 'Maya' },
+          { id: 'demo-like-1', target: 'demo-deck-0', ts: Date.now() - 1000 * 60 * 15, fromUserId: 'demo-note-2', userName: 'Jun' },
+        ]],
+      ]));
       return;
     }
     try {
@@ -158,8 +302,9 @@ export function useDeckWall() {
         `/note/aigram/ai/game/get/data/list?session_id=${encodeURIComponent(sessionId)}`,
         'GET',
       );
+      const rows = Array.isArray(res?.data) ? res.data : [];
       const pairs: Array<{ userId: string; deck: DeckEntry }> = [];
-      for (const row of Array.isArray(res?.data) ? res.data : []) {
+      for (const row of rows) {
         if (!row.user_id || !row.resource_data) continue;
         try {
           const save = JSON.parse(row.resource_data) as DeckSave;
@@ -172,22 +317,40 @@ export function useDeckWall() {
       }
       pairs.sort((a, b) => (b.deck.createdAt || 0) - (a.deck.createdAt || 0));
       const limited = pairs.slice(0, MAX_WALL);
-      const ids = Array.from(new Set(limited.map(p => p.userId)));
+      const rawMessages = messagesByTarget(rows.filter((row): row is { user_id: string; resource_data: string } => !!row.user_id && !!row.resource_data));
+      const rawLikes = likesByTarget(rows);
+      const allInteractorIds = new Set<string>();
+      rawMessages.forEach(messages => messages.forEach(message => {
+        if (message.fromUserId) allInteractorIds.add(message.fromUserId);
+      }));
+      rawLikes.forEach(likes => likes.forEach(like => {
+        if (like.fromUserId) allInteractorIds.add(like.fromUserId);
+      }));
+      const ids = Array.from(new Set([...limited.map(p => p.userId), ...allInteractorIds]));
       const profiles = await Promise.all(ids.map(async id => [id, await fetchProfile(id)] as const));
       const profileMap = new Map(profiles);
+      const stampedMessageMap = stampedMessages(rawMessages, profileMap);
+      const stampedLikeMap = stampedLikes(rawLikes, profileMap);
+      setMessageThreads(stampedMessageMap);
+      setLikeThreads(stampedLikeMap);
       setWall(limited.map(({ userId, deck }) => {
         const p = profileMap.get(userId);
+        const comments = stampedMessageMap.get(deck.id) || [];
+        const likes = uniqueLikesFor(deck.id, stampedLikeMap, mirror?.likes, telegramId ? String(telegramId) : null);
         return {
           ...deck,
           userId,
           userName: p?.name || deck.userName,
           userAvatarUrl: p?.head_url || deck.userAvatarUrl,
+          likeCount: likes.length,
+          commentCount: comments.length,
+          likedByMe: likes.some(like => like.fromUserId === String(telegramId || 'self')),
         };
       }));
     } catch {
       setWall([]);
     }
-  }, []);
+  }, [mirror?.likes]);
 
   useEffect(() => {
     refreshWall().catch(() => {});
@@ -203,6 +366,7 @@ export function useDeckWall() {
 
   const mergedWall = useMemo(() => {
     const cloudIds = new Set(wall.map(item => item.id));
+    const myUserId = telegramId ? String(telegramId) : 'self';
     const selfEntries: WallEntry[] = mine
       .filter(deck => !cloudIds.has(deck.id))
       .map(deck => ({
@@ -211,11 +375,24 @@ export function useDeckWall() {
         userName: 'YOU',
         userAvatarUrl: profile?.head_url,
         isSelf: true,
+        likeCount: uniqueLikesFor(deck.id, likeThreads, mirror?.likes, myUserId).length,
+        commentCount: threadFor(deck.id, messageThreads, mirror?.messages, myUserId).length,
+        likedByMe: (mirror?.likes || []).some(like => like.target === deck.id),
       }));
-    return [...selfEntries, ...wall]
+    const stampedWall = wall.map(entry => {
+      const likes = uniqueLikesFor(entry.id, likeThreads, mirror?.likes, myUserId);
+      const comments = threadFor(entry.id, messageThreads, mirror?.messages, myUserId);
+      return {
+        ...entry,
+        likeCount: likes.length,
+        commentCount: comments.length,
+        likedByMe: likes.some(like => like.fromUserId === myUserId),
+      };
+    });
+    return [...selfEntries, ...stampedWall]
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
       .slice(0, MAX_WALL);
-  }, [mine, wall, profile?.head_url]);
+  }, [likeThreads, messageThreads, mine, mirror?.likes, mirror?.messages, profile?.head_url, wall]);
 
   const stageLabel = useMemo(() => {
     if (status !== 'generating') return '';
@@ -227,14 +404,14 @@ export function useDeckWall() {
   }, [elapsedMs, generationPhase, status]);
 
   const generateDeck = useCallback(async () => {
-    if (!mirror || status === 'generating') return;
+    if (!mirror || status === 'generating' || !canCraft) return;
     setStatus('generating');
     setStartedAt(Date.now());
     setElapsedMs(0);
     setGenerationPhase('art');
     setError('');
     const hasAvatar = !!profile?.head_url;
-    const prompt = hasAvatar ? avatarPrompt : basicPrompt;
+    const prompt = hasAvatar ? avatarPromptFor(profile?.name) : basicPromptFor(profile?.name);
     const draftId = makeId();
     const draftCreatedAt = Date.now();
     const wheelVariant = variantForSeed(`${draftId}-${draftCreatedAt}`);
@@ -269,6 +446,7 @@ export function useDeckWall() {
         ...mirror,
         decks: [deck, ...mirror.decks].slice(0, MAX_MINE),
         totalGenerated: (mirror.totalGenerated || 0) + 1,
+        lastGeneratedAt: now,
       };
       setMirror(next);
       persist(next);
@@ -281,12 +459,96 @@ export function useDeckWall() {
       setGenerationPhase('idle');
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [gen, mirror, persist, profile, refreshWall, status]);
+  }, [canCraft, gen, mirror, persist, profile, refreshWall, status]);
+
+  const myUserId = telegramId ? String(telegramId) : 'self';
+
+  const commentsFor = useCallback((entry: WallEntry | null): GuestMessage[] => {
+    if (!entry) return [];
+    return threadFor(entry.id, messageThreads, mirror?.messages, myUserId).map(message => (
+      message.fromUserId === myUserId
+        ? { ...message, userName: 'YOU', userAvatarUrl: profile?.head_url }
+        : message
+    ));
+  }, [messageThreads, mirror?.messages, myUserId, profile?.head_url]);
+
+  const likesFor = useCallback((entry: WallEntry | null): DeckLike[] => {
+    if (!entry) return [];
+    return uniqueLikesFor(entry.id, likeThreads, mirror?.likes, myUserId).map(like => (
+      like.fromUserId === myUserId
+        ? { ...like, userName: 'YOU', userAvatarUrl: profile?.head_url }
+        : like
+    ));
+  }, [likeThreads, mirror?.likes, myUserId, profile?.head_url]);
+
+  const hasLiked = useCallback((entry: WallEntry | null): boolean => {
+    if (!entry) return false;
+    return likesFor(entry).some(like => like.fromUserId === myUserId);
+  }, [likesFor, myUserId]);
+
+  const toggleLike = useCallback((entry: WallEntry) => {
+    if (!entry?.id) return;
+    setMirror(prev => {
+      const base = prev ?? mirror ?? DEFAULT_SAVE;
+      const alreadyLiked = (base.likes || []).some(like => like.target === entry.id);
+      const nextLikes = alreadyLiked
+        ? (base.likes || []).filter(like => like.target !== entry.id)
+        : [
+            {
+              id: newId(),
+              target: entry.id,
+              toUserId: entry.isSelf ? undefined : entry.userId,
+              ts: Date.now(),
+            },
+            ...(base.likes || []),
+          ].slice(0, MAX_LIKES_STORED);
+      const next: DeckSave = { ...base, likes: nextLikes };
+      persist(next);
+      return next;
+    });
+  }, [mirror, persist]);
+
+  const sendComment = useCallback((entry: WallEntry, text: string) => {
+    if (!entry?.id) return false;
+    const msg = newMessage(entry.id, entry.isSelf ? undefined : entry.userId, text);
+    if (!msg) return false;
+
+    setMirror(prev => {
+      const base = prev ?? mirror ?? DEFAULT_SAVE;
+      const next = appendMessage(base, msg);
+      persist(next);
+      return next;
+    });
+
+    if (!entry.isSelf && entry.userId && entry.userId !== myUserId && !notifiedMessages.current.has(entry.id)) {
+      notifiedMessages.current.add(entry.id);
+      trigger(
+        'deck_wall_note',
+        guestbookNotifyConfig({
+          toUserId: entry.userId,
+          refUrl: entry.imageUrl?.startsWith('http')
+            ? entry.imageUrl
+            : new URL(entry.imageUrl, document.baseURI).href,
+          template: '{sender_name} left a mark on your deck',
+          imagePrompt: 'A street skateboard wall notification, premium skate deck detail, social note energy.',
+          note: msg.text,
+        }),
+      );
+    }
+
+    setTimeout(() => refreshWall().catch(() => {}), 800);
+    return true;
+  }, [mirror, myUserId, persist, refreshWall, trigger]);
 
   const openAuthor = useCallback((entry: WallEntry) => {
     if (!isInAigram || entry.isSelf || !entry.userId || entry.userId === 'self') return;
     openAigramProfile(entry.userId);
   }, []);
+
+  const openUserProfile = useCallback((userId?: string) => {
+    if (!isInAigram || !userId || userId === 'self' || userId === myUserId) return;
+    openAigramProfile(userId);
+  }, [myUserId]);
 
   return {
     profile,
@@ -299,12 +561,20 @@ export function useDeckWall() {
     stageLabel,
     elapsedMs,
     generationPhase,
+    canCraft,
+    cooldownRemainingMs,
     selected,
     setSelected,
     error,
     scale,
+    commentsFor,
+    likesFor,
+    hasLiked,
+    toggleLike,
+    sendComment,
     generateDeck,
     openAuthor,
+    openUserProfile,
     generating: gen.loading || status === 'generating',
   };
 }

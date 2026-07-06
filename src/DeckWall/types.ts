@@ -1,3 +1,5 @@
+import type { GuestMessage, WithMessages } from '../shared/social/guestbook';
+
 export const FIELD_W = 390;
 export const FIELD_H = 680;
 
@@ -20,9 +22,22 @@ export interface DeckEntry {
   userAvatarUrl?: string;
 }
 
-export interface DeckSave {
+export interface DeckLike {
+  id: string;
+  target: string;
+  toUserId?: string;
+  ts: number;
+  fromUserId?: string;
+  userName?: string;
+  userAvatarUrl?: string;
+}
+
+export interface DeckSave extends WithMessages {
   decks: DeckEntry[];
   totalGenerated: number;
+  messages?: GuestMessage[];
+  likes?: DeckLike[];
+  lastGeneratedAt?: number;
   _lastActive?: number;
 }
 
@@ -42,6 +57,9 @@ export interface WallEntry extends DeckEntry {
   userName?: string;
   userAvatarUrl?: string;
   isSelf?: boolean;
+  likeCount?: number;
+  commentCount?: number;
+  likedByMe?: boolean;
 }
 
 export const REVIEW_DECK_SHEET = './img/review-deck-sheet.jpg';

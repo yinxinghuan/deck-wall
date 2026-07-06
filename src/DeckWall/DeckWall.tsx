@@ -1,7 +1,8 @@
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type DeckVariant, type WallEntry } from './types';
 import { useDeckWall } from './hooks/useDeckWall';
 import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
+import { timeAgo, type GuestMessage } from '../shared/social/guestbook';
 import { t } from './i18n';
 import { playClick, playFail, playGenerate, playOpen, playSuccess, resumeAudio } from './utils/sounds';
 import './DeckWall.less';
@@ -45,12 +46,20 @@ function productionNoteKey(elapsedMs: number) {
   return `productionNote${Math.floor(elapsedMs / 9000) % 4}`;
 }
 
+function formatCooldown(ms: number) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  return `${minutes}m ${String(total % 60).padStart(2, '0')}s`;
+}
+
 const productionStepKeys = ['stagePrep', 'stageSpray', 'stageBrand', 'stageSeal'] as const;
 
 function deckStyle(entry: WallEntry, index: number): CSSProperties {
   const row = Math.floor(index / 3);
   const col = index % 3;
-  const rowShift = row % 2 === 0 ? 0 : 38;
+  const rowShift = row % 2 === 0 ? 0 : 34;
   const imageUrl = entry.imageUrl.startsWith('http')
     ? entry.imageUrl
     : new URL(entry.imageUrl, document.baseURI).href;
@@ -83,6 +92,143 @@ function DeckCard({
   );
 }
 
+function CommentAvatar({ message }: { message: GuestMessage }) {
+  return (
+    <span className="dw-comment__avatar" aria-hidden>
+      {message.userAvatarUrl ? (
+        <img src={message.userAvatarUrl} alt="" draggable={false} />
+      ) : (
+        <span>{authorInitial(message.userName)}</span>
+      )}
+    </span>
+  );
+}
+
+function DetailSocial({
+  game,
+  entry,
+}: {
+  game: ReturnType<typeof useDeckWall>;
+  entry: WallEntry;
+}) {
+  const [draft, setDraft] = useState('');
+  const comments = game.commentsFor(entry);
+  const likes = game.likesFor(entry);
+  const liked = game.hasLiked(entry);
+
+  useEffect(() => {
+    setDraft('');
+  }, [entry.id]);
+
+  function submitComment(ev: FormEvent) {
+    ev.preventDefault();
+    if (game.sendComment(entry, draft)) setDraft('');
+  }
+
+  const latestComments = comments.slice(-3).reverse();
+
+  return (
+    <div className="dw-modal__social">
+      <div className="dw-modal__identity">
+        {entry.isSelf ? (
+          <div className="dw-modal__author-card dw-modal__author-card--self">
+            <span className="dw-modal__avatar" aria-hidden>
+              {entry.userAvatarUrl ? (
+                <img src={entry.userAvatarUrl} alt="" draggable={false} />
+              ) : (
+                <span>{authorInitial(entry.userName || t('self'))}</span>
+              )}
+            </span>
+            <span className="dw-modal__name">
+              <small>{entry.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
+              <strong>{entry.userName || t('self')}</strong>
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="dw-modal__author-card"
+            onClick={() => game.openAuthor(entry)}
+            disabled={!game.isInAigram}
+            aria-label={t('openProfile', { n: entry.userName || 'rider' })}
+          >
+            <span className="dw-modal__avatar" aria-hidden>
+              {entry.userAvatarUrl ? (
+                <img src={entry.userAvatarUrl} alt="" draggable={false} />
+              ) : (
+                <span>{authorInitial(entry.userName)}</span>
+              )}
+            </span>
+            <span className="dw-modal__name">
+              <small>{entry.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
+              <strong>{entry.userName || 'rider'}</strong>
+            </span>
+          </button>
+        )}
+
+        <div className="dw-social__metrics" aria-label={`${t('likeCount', { n: likes.length })}, ${t('commentCount', { n: comments.length })}`}>
+          <span>{likes.length}</span>
+          <span>{comments.length}</span>
+        </div>
+      </div>
+
+      <div className="dw-social__actions">
+        <button
+          type="button"
+          className={`dw-like ${liked ? 'dw-like--active' : ''}`}
+          onClick={() => game.toggleLike(entry)}
+          aria-pressed={liked}
+        >
+          <span aria-hidden>{liked ? '♥' : '♡'}</span>
+          {liked ? t('liked') : t('like')}
+        </button>
+        <span>{t('comments')}</span>
+      </div>
+
+      <div className="dw-comments">
+        {latestComments.length ? latestComments.map(message => {
+          const isMine = message.fromUserId === String(game.telegramId || 'self') || message.userName === 'YOU';
+          const author = message.userName || (isMine ? t('self') : 'rider');
+          return (
+            <div className="dw-comment" key={message.id}>
+              {isMine ? (
+                <div className="dw-comment__author dw-comment__author--self">
+                  <CommentAvatar message={message} />
+                  <strong>{t('self')}</strong>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="dw-comment__author"
+                  onClick={() => game.openUserProfile(message.fromUserId)}
+                  disabled={!game.isInAigram}
+                >
+                  <CommentAvatar message={message} />
+                  <strong>{author}</strong>
+                </button>
+              )}
+              <p>{message.text}</p>
+              <time>{timeAgo(message.ts, navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')}</time>
+            </div>
+          );
+        }) : (
+          <p className="dw-comments__empty">{t('noComments')}</p>
+        )}
+      </div>
+
+      <form className="dw-comment-form" onSubmit={submitComment}>
+        <input
+          value={draft}
+          onChange={ev => setDraft(ev.target.value)}
+          maxLength={140}
+          placeholder={t('commentPlaceholder')}
+        />
+        <button type="submit" disabled={!draft.trim()}>{t('sendComment')}</button>
+      </form>
+    </div>
+  );
+}
+
 export default function DeckWall() {
   const game = useDeckWall();
   const hasAvatar = !!game.profile?.head_url;
@@ -104,7 +250,7 @@ export default function DeckWall() {
   });
 
   async function handleGenerate() {
-    if (game.generating || !game.profileLoaded) return;
+    if (game.generating || !game.profileLoaded || !game.canCraft) return;
     resumeAudio();
     playClick();
     playGenerate();
@@ -172,10 +318,21 @@ export default function DeckWall() {
 
           {game.status === 'failed' && <p className="dw-error">{game.error || 'Generation failed.'}</p>}
 
-          <button type="button" className="dw-cta" onPointerDown={handleGenerate} disabled={game.generating || !game.profileLoaded}>
-            <span className="dw-cta__mark">{game.generating ? t('generating') : t('craftCtaTitle')}</span>
-            <span className="dw-cta__copy">{hasAvatar ? t('craftCtaSubAvatar') : t('craftCtaSubBasic')}</span>
-            <span className="dw-cta__arrow" aria-hidden>→</span>
+          <button
+            type="button"
+            className={`dw-cta ${!game.canCraft ? 'dw-cta--cooldown' : ''}`}
+            onPointerDown={handleGenerate}
+            disabled={game.generating || !game.profileLoaded || !game.canCraft}
+          >
+            <span className="dw-cta__mark">
+              {game.generating ? t('generating') : game.canCraft ? t('craftCtaTitle') : t('craftCooldownTitle')}
+            </span>
+            <span className="dw-cta__copy">
+              {game.canCraft
+                ? hasAvatar ? t('craftCtaSubAvatar') : t('craftCtaSubBasic')
+                : t('craftCooldownSub', { n: formatCooldown(game.cooldownRemainingMs) })}
+            </span>
+            <span className="dw-cta__arrow" aria-hidden>{game.canCraft ? '→' : '⌁'}</span>
           </button>
 
           {!game.isInAigram && <p className="dw-offplatform">{t('offPlatform')}</p>}
@@ -245,43 +402,7 @@ export default function DeckWall() {
                   <SkateTruckSvg className="dw-modal__back-svg" variant={wheelVariantFor(game.selected)} />
                 </div>
               </div>
-              <div className="dw-modal__identity">
-                {game.selected.isSelf ? (
-                  <div className="dw-modal__author-card dw-modal__author-card--self">
-                    <span className="dw-modal__avatar" aria-hidden>
-                      {game.selected.userAvatarUrl ? (
-                        <img src={game.selected.userAvatarUrl} alt="" draggable={false} />
-                      ) : (
-                        <span>{authorInitial(game.selected.userName || t('self'))}</span>
-                      )}
-                    </span>
-                    <span className="dw-modal__name">
-                      <small>{game.selected.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
-                      <strong>{game.selected.userName || t('self')}</strong>
-                    </span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="dw-modal__author-card"
-                    onClick={() => game.openAuthor(game.selected!)}
-                    disabled={!game.isInAigram}
-                    aria-label={t('openProfile', { n: game.selected.userName || 'rider' })}
-                  >
-                    <span className="dw-modal__avatar" aria-hidden>
-                      {game.selected.userAvatarUrl ? (
-                        <img src={game.selected.userAvatarUrl} alt="" draggable={false} />
-                      ) : (
-                        <span>{authorInitial(game.selected.userName)}</span>
-                      )}
-                    </span>
-                    <span className="dw-modal__name">
-                      <small>{game.selected.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
-                      <strong>{game.selected.userName || 'rider'}</strong>
-                    </span>
-                  </button>
-                )}
-              </div>
+              <DetailSocial game={game} entry={game.selected} />
             </div>
           </div>
         )}
