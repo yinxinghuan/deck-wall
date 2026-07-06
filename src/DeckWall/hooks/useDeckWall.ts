@@ -259,10 +259,30 @@ export function useDeckWall() {
   }, [savedData, mirror]);
 
   useEffect(() => {
-    const compute = () => setScale(Math.min(window.innerWidth / FIELD_W, window.innerHeight / FIELD_H));
+    const compute = () => {
+      const vv = window.visualViewport;
+      const root = document.getElementById('root')?.getBoundingClientRect();
+      const width = Math.max(1, Math.min(
+        vv?.width || window.innerWidth,
+        root?.width || window.innerWidth,
+      ));
+      const height = Math.max(1, Math.min(
+        vv?.height || window.innerHeight,
+        root?.height || window.innerHeight,
+      ));
+      setScale(Math.min(width / FIELD_W, height / FIELD_H));
+    };
     compute();
     window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
+    window.addEventListener('orientationchange', compute);
+    window.visualViewport?.addEventListener('resize', compute);
+    window.visualViewport?.addEventListener('scroll', compute);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('orientationchange', compute);
+      window.visualViewport?.removeEventListener('resize', compute);
+      window.visualViewport?.removeEventListener('scroll', compute);
+    };
   }, []);
 
   useEffect(() => {

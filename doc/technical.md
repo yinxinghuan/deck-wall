@@ -38,7 +38,7 @@
 - 社交互动：`toggleLike(entry)` 把 `DeckLike` 存在当前玩家自己的 `DeckSave.likes`，同一玩家对同一作品只保留 1 个赞，再次点击取消；聚合时用 `fromUserId` 去重。`sendComment(entry,text)` 用 `newMessage()` 生成 `GuestMessage`，通过 `appendMessage()` 写入当前玩家自己的 `DeckSave.messages`，留言上限 140 字，本地立即回显；给非本人作品留言时用 `useGameEvent().trigger('deck_wall_note', guestbookNotifyConfig(...))` 通知作者，`refUrl` 会用 `new URL(entry.imageUrl, document.baseURI).href` 把相对图片转成绝对 URL。
 - 背面硬件：`SkateTruckSvg` 只叠在详情页的彩色背面作品图上，正面 logo 品牌图不加轮子。SVG viewBox 为 `150 410`，真实详情页正面和背面板身主体都为 104px × 382px，CSS 中把背面 SVG 设为 140px × 382px 并向左右外扩，让轮子伸出板身两侧；两组轮架位于 SVG y=78px 和 y=332px。组件用 `useId()` 生成唯一渐变 id，避免多个预览同时渲染时 SVG 渐变冲突。真实页优先读取 `DeckEntry.wheelVariant`，旧作品 fallback 通过作品 id 在 `charcoal / cream / mint` 之间稳定分配轮子颜色，评审页用 `dwr-wheel-variants` 同时展示 3 个版本。背面板面通过 `.dw-modal__back-art::before` / `.dwr-deck--back > span::before` 添加上部横向高光，模拟亮面覆膜反光。
 - 跨用户身份：公共墙拉取每个作者的 `name/head_url`；列表墙不显示作者信息，详情弹层显示正反两面、头像 + 名字、互动内容；非本人点击详情作者 chip 或留言作者 chip 用 `openAigramProfile(userId)` 打开主页，竖向滚动墙内的作品点击用 `onClick`。
-- 响应式：真实游戏固定 `FIELD_W=390`、`FIELD_H=680`，根据窗口宽高计算 scale；评审页使用正常页面滚动。
+- 响应式：真实游戏固定 `FIELD_W=390`、`FIELD_H=680`，根据 `visualViewport` 与 `#root` 实际尺寸计算 scale；`.dw-shell` 顶部对齐、`.dw-stage` 使用 `transform-origin: top center`，避免 mini App 外层导航栏压缩可用高度后游戏仍垂直居中造成顶部空隙浪费。评审页使用正常页面滚动。
 - 评审模式：`App.tsx` 检查 `isInAigram` 和 URL 参数；非 Aigram 且未带 `?play=1` 时渲染评审页，避免缺平台环境时看不到最终生成墙效果。
 
 ## 4. 扩展点
