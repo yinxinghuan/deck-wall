@@ -41,6 +41,14 @@ function isTypingTarget(target: EventTarget | null) {
   return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 }
 
+function commentPlaceholder(entry: WallEntry) {
+  if (entry.isSelf) return t('commentPlaceholderSelf');
+  const name = (entry.userName || '').replace(/\s+/g, ' ').trim();
+  if (!name) return t('commentPlaceholder');
+  const shortName = name.length > 18 ? `${name.slice(0, 18)}...` : name;
+  return t('commentPlaceholderFor', { n: shortName });
+}
+
 function productionCopyKey(game: ReturnType<typeof useDeckWall>, hasAvatar: boolean) {
   if (game.generationPhase === 'brand') return 'productionBrand';
   if (game.generationPhase === 'saving') return 'productionSaving';
@@ -239,7 +247,7 @@ function DetailSocial({
           onFocus={focusComposer}
           onBlur={blurComposer}
           maxLength={140}
-          placeholder={t('commentPlaceholder')}
+          placeholder={commentPlaceholder(entry)}
         />
         <button type="submit" disabled={!draft.trim()}>{t('sendComment')}</button>
       </form>
