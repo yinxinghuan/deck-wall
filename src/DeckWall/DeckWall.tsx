@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 
 import { FIELD_H, FIELD_W, REVIEW_BACK_IMAGE, type DeckVariant, type WallEntry } from './types';
 import { useDeckWall } from './hooks/useDeckWall';
 import { SkateTruckSvg, type WheelVariant } from './components/SkateTruckSvg';
-import { timeAgo, type GuestMessage } from '../shared/social/guestbook';
+import { type GuestMessage } from '../shared/social/guestbook';
 import { t } from './i18n';
 import { playClick, playFail, playGenerate, playOpen, playSuccess, resumeAudio } from './utils/sounds';
 import './DeckWall.less';
@@ -144,7 +144,7 @@ function DetailSocial({
     window.setTimeout(() => onInputFocusChange(false), 120);
   }
 
-  const latestComments = comments.slice(-3).reverse();
+  const latestComments = comments.slice(-1).reverse();
 
   return (
     <div className="dw-modal__social">
@@ -159,7 +159,6 @@ function DetailSocial({
               )}
             </span>
             <span className="dw-modal__name">
-              <small>{entry.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
               <strong>{entry.userName || t('self')}</strong>
             </span>
           </div>
@@ -179,7 +178,6 @@ function DetailSocial({
               )}
             </span>
             <span className="dw-modal__name">
-              <small>{entry.hasAvatar ? t('avatarBadge') : t('noAvatarBadge')}</small>
               <strong>{entry.userName || 'rider'}</strong>
             </span>
           </button>
@@ -201,7 +199,6 @@ function DetailSocial({
           <span aria-hidden>{liked ? '♥' : '♡'}</span>
           {liked ? t('liked') : t('like')}
         </button>
-        <span>{t('comments')}</span>
       </div>
 
       <div className="dw-comments">
@@ -227,7 +224,6 @@ function DetailSocial({
                 </button>
               )}
               <p>{message.text}</p>
-              <time>{timeAgo(message.ts, navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')}</time>
             </div>
           );
         }) : (

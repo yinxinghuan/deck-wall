@@ -765,27 +765,29 @@
 
 .dw-modal__boards {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: end;
-  gap: 24px;
+  justify-self: center;
+  align-self: end;
+  display: block;
+  width: 236px;
+  height: 414px;
   min-height: 0;
-  padding: 0 0 4px;
+  padding: 0;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   z-index: 1;
+  isolation: isolate;
 }
 
 .dw-modal--keyboard .dw-modal__boards {
-  align-items: center;
   padding-bottom: 0;
-  transform: scale(0.78);
+  transform: scale(0.72) translateY(18px);
   transform-origin: center bottom;
 }
 
 .dw-modal__deck {
-  position: relative;
+  position: absolute;
+  top: 16px;
   width: 104px;
   height: 382px;
   background: transparent;
@@ -793,12 +795,17 @@
 }
 
 .dw-modal__deck--front {
-  transform: none;
+  left: 30px;
+  top: 24px;
+  transform: scale(0.94);
+  transform-origin: center bottom;
   z-index: 1;
+  opacity: 0.9;
 }
 
 .dw-modal__deck--back {
-  transform: none;
+  left: 102px;
+  top: 10px;
   z-index: 2;
 }
 
@@ -831,7 +838,7 @@
   background-position: center, center;
   opacity: 0.9;
   box-shadow:
-    0 16px 34px rgba(0,0,0,0.48),
+    0 18px 42px rgba(0,0,0,0.58),
     inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 
@@ -931,18 +938,18 @@
   z-index: 2;
   width: 100%;
   border-top: 1px solid rgba(243,239,226,0.18);
-  padding-top: 10px;
+  padding-top: 8px;
   display: grid;
-  grid-template-rows: auto auto minmax(42px, 1fr) 34px;
-  gap: 7px;
+  grid-template-rows: auto auto minmax(24px, 1fr) 32px;
+  gap: 5px;
   background:
-    linear-gradient(90deg, rgba(243,239,226,0.075), transparent 66%);
+    linear-gradient(90deg, rgba(243,239,226,0.052), transparent 62%);
 }
 
 .dw-modal--keyboard .dw-modal__social {
-  grid-template-rows: auto auto 0 38px;
-  gap: 6px;
-  padding-top: 8px;
+  grid-template-rows: auto auto 0 36px;
+  gap: 5px;
+  padding-top: 7px;
 }
 
 .dw-modal__identity {
@@ -958,7 +965,7 @@
 .dw-modal__author-card {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
+  min-height: 36px;
   border: 0;
   border-radius: 16px;
   padding: 0;
@@ -988,9 +995,9 @@
 }
 
 .dw-modal__avatar {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   overflow: hidden;
   border: 1px solid rgba(243,239,226,0.24);
@@ -1036,7 +1043,7 @@
     overflow-wrap: anywhere;
     white-space: normal;
     color: @cream;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 950;
     line-height: 1.02;
     text-transform: none;
@@ -1047,18 +1054,18 @@
 .dw-social__metrics {
   flex: 0 0 auto;
   display: flex;
-  gap: 6px;
+  gap: 5px;
 
   span {
-    min-width: 34px;
-    height: 26px;
+    min-width: 31px;
+    height: 24px;
     border: 1px solid rgba(243,239,226,0.14);
     border-radius: 999px;
     display: inline-grid;
     place-items: center;
     background: rgba(243,239,226,0.055);
     color: @cream;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 1000;
   }
 
@@ -1080,7 +1087,7 @@
 .dw-social__actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   color: rgba(243,239,226,0.5);
   font-size: 9px;
   font-weight: 1000;
@@ -1089,7 +1096,7 @@
 }
 
 .dw-like {
-  height: 28px;
+  height: 26px;
   border: 1px solid rgba(243,239,226,0.18);
   border-radius: 999px;
   padding: 0 11px;
@@ -1134,7 +1141,7 @@
 .dw-comment {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   color: rgba(243,239,226,0.68);
@@ -1159,7 +1166,7 @@
 
 .dw-comment__author {
   min-width: 0;
-  max-width: 82px;
+  max-width: 70px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -1221,16 +1228,16 @@
 .dw-comment-form {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 58px;
+  grid-template-columns: minmax(0, 1fr) 54px;
   gap: 7px;
 
   input,
   button {
     min-width: 0;
-    height: 34px;
+    height: 32px;
     border-radius: 999px;
     font: inherit;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 850;
   }
 
